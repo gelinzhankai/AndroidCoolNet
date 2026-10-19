@@ -3,11 +3,13 @@ import hashlib
 import json
 from pathlib import Path
 import subprocess
+import sys
 import tempfile
 import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
-DIST = ROOT / 'dist/v0.4.0'
+VERSION = sys.argv[1] if len(sys.argv) > 1 else 'v0.4.1'
+DIST = ROOT / 'dist' / VERSION
 
 
 def sha(path):
@@ -21,12 +23,14 @@ for line in (DIST/'SHA256SUMS.txt').read_text().splitlines():
 
 with tempfile.TemporaryDirectory(prefix='AndroidCoolNet-release-') as temp:
     dest = Path(temp)
-    with zipfile.ZipFile(DIST/'AndroidCoolNet-Windows-v0.4.0.zip') as archive:
+    with zipfile.ZipFile(DIST/f'AndroidCoolNet-Windows-{VERSION}.zip') as archive:
         names = archive.namelist()
         assert not any('cache/gms/' in n or 'x86_64-release.apk' in n or '/tests/' in n or '/reports/' in n for n in names)
         assert sum(n.endswith('.apk') for n in names) == 1
         archive.extractall(dest)
     app = dest/'AndroidCoolNet'
+    if VERSION == 'v0.4.1':
+        assert (app/'PRIVACY_NOTICE.md').is_file()
     manifest = json.loads((app/'SHA256.json').read_text())
     for relative, expected in manifest.items():
         assert sha(app/relative) == expected, relative
@@ -35,7 +39,7 @@ with tempfile.TemporaryDirectory(prefix='AndroidCoolNet-release-') as temp:
     for entry in catalog:
         assert sha(DIST/entry['download_asset']) == entry['download_sha256']
         assert (DIST/entry['download_asset']).stat().st_size == entry['download_bytes']
-    with zipfile.ZipFile(DIST/'AndroidCoolNet-Google-Offline-v0.4.0.zip') as archive:
+    with zipfile.ZipFile(DIST/f'AndroidCoolNet-Google-Offline-{VERSION}.zip') as archive:
         apks = {Path(n).name: n for n in archive.namelist() if n.endswith('.apk')}
         assert set(apks) == {e['file'] for e in catalog}
         for entry in catalog:
@@ -56,7 +60,7 @@ for api in (35,36,37):
         assert cached(Path(cache),entry)
 print('PASS: bundled runtime imports each GSF from the offline ZIP')
 '''
-    subprocess.run([python, '-X', 'utf8', '-c', snippet, str(app), str(DIST/'AndroidCoolNet-Google-Offline-v0.4.0.zip')], check=True, timeout=120)
+    subprocess.run([python, '-X', 'utf8', '-c', snippet, str(app), str(DIST/f'AndroidCoolNet-Google-Offline-{VERSION}.zip')], check=True, timeout=120)
     # Read-only inventory and all-installed branch; explicitly target the isolated emulator.
     adb = str(app/'platform-tools/adb.exe')
     def shell(*args):
@@ -68,6 +72,8 @@ print('PASS: bundled runtime imports each GSF from the offline ZIP')
     subprocess.run(command + ['--gms-only'], check=True, timeout=90)
     report = json.loads(next((app/'reports').glob('*.json')).read_text(encoding='utf-8'))
     assert report['google_install']['complete']
+    if VERSION == 'v0.4.1':
+        assert report['privacy_check']['status'] == 'not_installed'
     assert all(x['status']=='already_installed' for x in report['google_install']['components'].values())
     assert not (app/'cache/gms').exists()
     assert 'Active default network: none' in shell('shell','dumpsys','connectivity')

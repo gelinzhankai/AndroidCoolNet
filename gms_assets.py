@@ -12,8 +12,8 @@ import webbrowser
 import zipfile
 import zlib
 
-RELEASE_PAGE = "https://github.com/gelinzhankai/AndroidCoolNet/releases/tag/v0.4.0"
-ASSET_BASE = "https://github.com/gelinzhankai/AndroidCoolNet/releases/download/v0.4.0/"
+RELEASE_PAGE = "https://github.com/gelinzhankai/AndroidCoolNet/releases/tag/v0.4.1"
+ASSET_BASE = "https://github.com/gelinzhankai/AndroidCoolNet/releases/download/v0.4.1/"
 LABELS = {"com.google.android.gsf": "Google 服务框架", "com.google.android.gms": "Google Play 服务",
           "com.android.vending": "Google Play 商店"}
 MAX_ARCHIVE = 512 * 1024 * 1024
@@ -177,7 +177,7 @@ def download_archive(entry, destination, proxy=None):
         raise AssetError("下载清单的附件名称无效。")
     url = ASSET_BASE + urllib.parse.quote(asset)
     opener = urllib.request.build_opener(urllib.request.ProxyHandler({"https": proxy, "http": proxy} if proxy else {}))
-    request = urllib.request.Request(url, headers={"User-Agent": "AndroidCoolNet/0.4.0"})
+    request = urllib.request.Request(url, headers={"User-Agent": "AndroidCoolNet/0.4.1"})
     expected = entry["download_bytes"]
     if not 0 < expected <= MAX_ARCHIVE:
         raise AssetError("下载清单的文件大小无效。")

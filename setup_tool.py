@@ -35,6 +35,11 @@ APK_HASHES = {
     "x86_64": "a722aef0988f3ac90ab2b04755bb5a3f69ddd68fc38744c1ab04d2543d45af45",
 }
 GOOGLE_PACKAGES = ("com.google.android.gsf", "com.google.android.gms", "com.android.vending")
+ANTIFRAUD_PACKAGE = "com.hicorenational.antifraud"
+PRIVACY_WARNING = (
+    "此应用已有多方报告其越权收集设备数据和滥用用户隐私信息，"
+    "卸载可以减少该应用继续访问设备数据的机会，但无法撤回已经上传的数据，也不能据此保证整台手机安全。"
+)
 
 
 class SetupError(Exception):
@@ -43,6 +48,101 @@ class SetupError(Exception):
 
 def say(message):
     print(message, flush=True)
+
+
+def say_red(message):
+    """Bright red on Windows consoles/ANSI terminals; readable text in redirected logs."""
+    if not sys.stdout.isatty():
+        say(message)
+        return
+    if os.name == "nt":
+        import ctypes
+        from ctypes import wintypes
+
+        class Coord(ctypes.Structure):
+            _fields_ = [("X", wintypes.SHORT), ("Y", wintypes.SHORT)]
+
+        class Rect(ctypes.Structure):
+            _fields_ = [(name, wintypes.SHORT) for name in ("Left", "Top", "Right", "Bottom")]
+
+        class BufferInfo(ctypes.Structure):
+            _fields_ = [("size", Coord), ("cursor", Coord), ("attributes", wintypes.WORD),
+                        ("window", Rect), ("maximum", Coord)]
+
+        kernel = ctypes.WinDLL("kernel32", use_last_error=True)
+        kernel.GetStdHandle.argtypes = [wintypes.DWORD]
+        kernel.GetStdHandle.restype = wintypes.HANDLE
+        kernel.GetConsoleScreenBufferInfo.argtypes = [wintypes.HANDLE, ctypes.POINTER(BufferInfo)]
+        kernel.SetConsoleTextAttribute.argtypes = [wintypes.HANDLE, wintypes.WORD]
+        handle = kernel.GetStdHandle(-11)
+        info = BufferInfo()
+        if kernel.GetConsoleScreenBufferInfo(handle, ctypes.byref(info)):
+            if kernel.SetConsoleTextAttribute(handle, (info.attributes & 0xF0) | 0x0C):
+                try:
+                    say(message)
+                finally:
+                    kernel.SetConsoleTextAttribute(handle, info.attributes)
+                return
+    say("\033[1;31m" + message + "\033[0m")
+
+
+def optional_antifraud_removal(adb, installed, detect_only=False):
+    """Explicit prompt for a single package/user; removal failure never aborts provisioning."""
+    result = {"package": ANTIFRAUD_PACKAGE, "user": 0, "status": "not_installed", "uninstall_attempted": False}
+    if ANTIFRAUD_PACKAGE not in installed:
+        say("国家反诈中心：当前用户未安装，继续。")
+        return result
+    say(f"检测到国家反诈中心（包名：{ANTIFRAUD_PACKAGE}；用户：0）。")
+    try:
+        details = adb.shell("dumpsys", "package", ANTIFRAUD_PACKAGE)
+        version = re.search(r"\bversionName=([^\s]+)", details)
+        if version:
+            # App-controlled metadata must not inject terminal escape sequences.
+            result["version"] = re.sub(r"[^\w.+()\-]", "?", version[1])[:80]
+            say("检测到的版本：" + result["version"])
+    except (SetupError, OSError):
+        say("版本信息读取失败，将按上述准确包名处理。")
+    say_red("【隐私风险提醒】" + PRIVACY_WARNING)
+    say("以上为公开报告中的风险指称，不代表本工具已审计你手机上的版本；来源及适用范围见 PRIVACY_NOTICE.md。")
+    if detect_only:
+        say("仅检测模式：保留应用，不询问或执行卸载。")
+        result["status"] = "detected_only"
+        return result
+    say("卸载会删除当前用户下的应用及其本地数据。")
+    while True:
+        try:
+            choice = input("请选择：1 卸载后继续（默认，直接回车） / 2 保留并继续：").strip()
+        except EOFError:
+            say("未收到交互输入，保留应用并继续。")
+            result["status"] = "kept_no_input"
+            return result
+        if choice in ("", "1", "2"):
+            break
+        say("请输入 1 或 2；直接回车选择 1 卸载后继续。")
+    if choice == "2":
+        say("已选择保留国家反诈中心，继续安装流程。")
+        result["status"] = "kept"
+        return result
+    try:
+        if ANTIFRAUD_PACKAGE not in adb.packages():
+            say("该应用已不在当前用户的安装列表中，继续。")
+            result["status"] = "already_absent"
+            return result
+        result["uninstall_attempted"] = True
+        say("正在卸载当前用户下的国家反诈中心…")
+        output = adb.shell("pm", "uninstall", "--user", "0", ANTIFRAUD_PACKAGE,
+                           timeout=90, check=False, include_stderr=True)
+        if ANTIFRAUD_PACKAGE in adb.packages():
+            code = re.search(r"\b(?:DELETE_FAILED|INSTALL_FAILED)_[A-Z0-9_]+\b", output)
+            reason = code[0] if code else "系统拒绝卸载或卸载后仍能检测到应用"
+            raise SetupError(reason)
+        result["status"] = "uninstalled"
+        say("已确认该应用不在当前用户的安装列表中，继续安装流程。")
+    except (SetupError, OSError) as exc:
+        result["status"] = "failed"
+        result["reason"] = str(exc) if isinstance(exc, SetupError) else "本地 ADB 进程操作失败"
+        say("卸载未完成或无法确认：" + result["reason"] + "。继续后续安装流程。")
+    return result
 
 
 def fetch(url, proxy=None, limit=MAX_DOWNLOAD):
@@ -723,6 +823,9 @@ def main(argv=None):
     device, installed = inspect_device(adb)
     say(f"设备：{device['model']} / Android {device['android']}（API {device['api']}）/ {serial}")
     say("CPU 架构：" + ", ".join(device['abis']))
+    privacy_result = optional_antifraud_removal(adb, installed, detect_only=args.detect_only)
+    if not args.detect_only and privacy_result["status"] != "not_installed":
+        save_report({"phase": "privacy", "serial": serial, "privacy_check": privacy_result})
     states = {"installed": "已安装（保留）", "disabled": "已安装但禁用（保留）",
               "not_installed_for_user": "系统已有，当前用户未安装", "missing": "缺失"}
     for p, state in device["gms"].items():
@@ -733,7 +836,8 @@ def main(argv=None):
     google_result = {"skipped": True, "complete": False} if args.skip_gms else provision_google(adb, device, proxy=args.pc_download_proxy)
     if not args.skip_gms:
         # Persist even if a later subscription / UI step is cancelled or fails.
-        save_report({"phase": "google", "serial": serial, "device": device, "google_install": google_result})
+        save_report({"phase": "google", "serial": serial, "device": device, "google_install": google_result,
+                     "privacy_check": privacy_result})
         device, installed = inspect_device(adb)
     google_exit = 0 if args.skip_gms or google_result["complete"] else 2
     if args.gms_only:
@@ -758,6 +862,7 @@ def main(argv=None):
         with serve_profile(adb, content) as url:
             profile_status = ui.activate_or_import(name, url)
     report = {"device": device, "serial": serial, "client_version": VERSION,
+              "privacy_check": privacy_result,
               "google_install": google_result,
               "install": install_status, "profile": name, "profile_status": profile_status,
               "subscription_status": subscription_status,
