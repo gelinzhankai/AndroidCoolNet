@@ -1,10 +1,10 @@
-# AndroidCoolNet（Windows / ADB v0.4.0）
+# AndroidCoolNet（安酷奈）
 
-双击 `install.cmd`，自动检测 Android 版本/CPU 架构，补装缺失的 Google 基础组件，再安装官方 Clash Meta for Android、导入节点并设置应用白名单。无需 root，也无需在电脑预装 Python。手机需要开启 USB 调试、允许电脑连接，整个配置过程保持解锁，勿手动操作界面。
+一种优雅便携的Android设备科学上网基础设施自动化工具
 
 ## 下载哪个包
 
-从 [v0.4.0 发布页](https://github.com/gelinzhankai/AndroidCoolNet/releases/tag/v0.4.0) 下载附件（不要下载 GitHub 自动生成的 Source code 代替运行包）：
+从 [v0.4.0 发布页](https://github.com/gelinzhankai/AndroidCoolNet/releases/tag/v0.4.0) 下载附件：
 
 | 文件 | 用途 |
 |---|---|
