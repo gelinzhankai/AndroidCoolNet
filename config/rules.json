@@ -1,0 +1,24 @@
+{
+  "description": "仅白名单应用进入 VPN；局域网及常见国内域名直连，其他流量走 PROXY。这不是完整中国 IP/域名库。",
+  "rules": [
+    "IP-CIDR,127.0.0.0/8,DIRECT,no-resolve",
+    "IP-CIDR,10.0.0.0/8,DIRECT,no-resolve",
+    "IP-CIDR,172.16.0.0/12,DIRECT,no-resolve",
+    "IP-CIDR,192.168.0.0/16,DIRECT,no-resolve",
+    "IP-CIDR,169.254.0.0/16,DIRECT,no-resolve",
+    "DOMAIN-SUFFIX,cn,DIRECT",
+    "DOMAIN-SUFFIX,baidu.com,DIRECT",
+    "DOMAIN-SUFFIX,qq.com,DIRECT",
+    "DOMAIN-SUFFIX,weixin.com,DIRECT",
+    "DOMAIN-SUFFIX,taobao.com,DIRECT",
+    "DOMAIN-SUFFIX,tmall.com,DIRECT",
+    "DOMAIN-SUFFIX,alipay.com,DIRECT",
+    "DOMAIN-SUFFIX,jd.com,DIRECT",
+    "DOMAIN-SUFFIX,bilibili.com,DIRECT",
+    "DOMAIN-SUFFIX,bilivideo.com,DIRECT",
+    "DOMAIN-SUFFIX,163.com,DIRECT",
+    "DOMAIN-SUFFIX,zhihu.com,DIRECT",
+    "DOMAIN-SUFFIX,douyin.com,DIRECT",
+    "MATCH,PROXY"
+  ]
+}

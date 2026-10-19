@@ -1,0 +1,22 @@
+# 生成的节点配置使用这些参数；这不是手机私有的 override.json。
+# 修改后需要提供有效订阅并重新运行工具；跳过订阅时不修改已有配置。
+# 手机“覆写”页明确设置的值优先；Do not modify 才沿用导入配置。
+# null 表示不输出该字段；端口 0 表示关闭对应监听。
+port: null                 # HTTP Port
+socks-port: null           # Socks Port
+redir-port: null           # Redirect Port；不等于 Android VPN 转发
+tproxy-port: null          # TProxy Port；不等于 Android VPN 转发
+mixed-port: 7890           # Mixed Port
+authentication: null      # 例如 ["username:password"]；不要把真实密码加入分享包
+allow-lan: false           # Allow LAN
+bind-address: "127.0.0.1"  # Bind Address
+mode: rule
+log-level: info
+ipv6: false
+dns:
+  enable: true
+  listen: "127.0.0.1:1053"
+  enhanced-mode: fake-ip
+  fake-ip-range: "198.18.0.1/16"
+  nameserver: ["223.5.5.5", "119.29.29.29"]
+# External Controller 在 CMFA 中仅允许通过手机覆写页启用，不能在这里启用。

@@ -1,0 +1,6 @@
+# Local-only test proxy; no subscription, credentials or Internet forwarding.
+proxies:
+  - name: LOCAL-TEST
+    type: http
+    server: 127.0.0.1
+    port: 19090

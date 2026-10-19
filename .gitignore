@@ -1,0 +1,9 @@
+cache/
+runtime/
+platform-tools/
+reports/
+tests/artifacts/
+__pycache__/
+dist/
+*.pyc
+private/

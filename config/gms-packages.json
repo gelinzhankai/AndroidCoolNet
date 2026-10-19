@@ -1,0 +1,135 @@
+{
+  "schema": 1,
+  "packages": [
+    {
+      "package": "com.google.android.gsf",
+      "file": "gsf-35.apk",
+      "version_code": 35,
+      "version_name": "15",
+      "min_sdk": 35,
+      "target_sdk": 35,
+      "supported_api_min": 35,
+      "supported_api_max": 35,
+      "abis": [
+        "noarch"
+      ],
+      "sha256": "98f05c47ac54dd53dfafb66881cb1b076cdaf741fe5340d1a2c2292362881686",
+      "bytes": 4383648,
+      "certificate_lineage_sha256": [
+        "f0fd6c5b410f25cb25c3b53346c8972fae30f8ee7411df910480ad6b2d60db83",
+        "7ce83c1b71f3d572fed04c8d40c5cb10ff75e6d87d9df6fbd53f0468c2905053"
+      ],
+      "required_libraries": [],
+      "source": "https://www.apkmirror.com/apk/google-inc/google-services-framework/google-services-framework-15-release/google-services-framework-15-12-android-apk-download/",
+      "validation": "APK signature and manifest verified; OEM runtime/login not verified",
+      "download_asset": "gsf-35.apk.zip",
+      "download_bytes": 2107603,
+      "download_sha256": "c8e8102f38901df93a115ecebd61020ca2829c9da11e222a9aea631f9ade45eb"
+    },
+    {
+      "package": "com.google.android.gsf",
+      "file": "gsf-36.apk",
+      "version_code": 36,
+      "version_name": "16",
+      "min_sdk": 36,
+      "target_sdk": 36,
+      "supported_api_min": 36,
+      "supported_api_max": 36,
+      "abis": [
+        "noarch"
+      ],
+      "sha256": "b2df2388751cf9eca445867ca67e2c1c5acb14868b70ff4fa0e47dadda5ea9ed",
+      "bytes": 1124251,
+      "certificate_lineage_sha256": [
+        "f0fd6c5b410f25cb25c3b53346c8972fae30f8ee7411df910480ad6b2d60db83",
+        "7ce83c1b71f3d572fed04c8d40c5cb10ff75e6d87d9df6fbd53f0468c2905053"
+      ],
+      "required_libraries": [],
+      "source": "https://www.apkmirror.com/apk/google-inc/google-services-framework/google-services-framework-16-release/google-services-framework-16-25-android-apk-download/",
+      "validation": "APK signature and manifest verified; OEM runtime/login not verified",
+      "download_asset": "gsf-36.apk.zip",
+      "download_bytes": 428746,
+      "download_sha256": "d06db9f962ee7df67301e024b2503f2889e1cff6447ec7a793947ede5f4a7f12"
+    },
+    {
+      "package": "com.google.android.gsf",
+      "file": "gsf-37.apk",
+      "version_code": 37,
+      "version_name": "17",
+      "min_sdk": 37,
+      "target_sdk": 37,
+      "supported_api_min": 37,
+      "supported_api_max": 37,
+      "abis": [
+        "noarch"
+      ],
+      "sha256": "23609670d8353aaceba90e45121826011a68dbb419adb09bb0f45b4f38386b55",
+      "bytes": 1128491,
+      "certificate_lineage_sha256": [
+        "f0fd6c5b410f25cb25c3b53346c8972fae30f8ee7411df910480ad6b2d60db83",
+        "7ce83c1b71f3d572fed04c8d40c5cb10ff75e6d87d9df6fbd53f0468c2905053"
+      ],
+      "required_libraries": [],
+      "source": "https://www.apkmirror.com/apk/google-inc/google-services-framework/google-services-framework-17-release/google-services-framework-17-5-android-apk-download/",
+      "validation": "APK signature and manifest verified; OEM runtime/login not verified",
+      "download_asset": "gsf-37.apk.zip",
+      "download_bytes": 434066,
+      "download_sha256": "3a3d281d9b43101a46f09239855bceaced657f4bac5800e97526e337f8a3f248"
+    },
+    {
+      "package": "com.google.android.gms",
+      "file": "gms-arm64.apk",
+      "version_code": 264032035,
+      "version_name": "26.40.32 (260400-995630914)",
+      "min_sdk": 35,
+      "target_sdk": 37,
+      "supported_api_min": 35,
+      "supported_api_max": 37,
+      "abis": [
+        "arm64-v8a",
+        "armeabi-v7a"
+      ],
+      "sha256": "f473fd5e180d19cfd74b2e40f1f1ede2fc13379951942942b0d7d9d50bdad823",
+      "bytes": 326311735,
+      "certificate_lineage_sha256": [
+        "f0fd6c5b410f25cb25c3b53346c8972fae30f8ee7411df910480ad6b2d60db83",
+        "7ce83c1b71f3d572fed04c8d40c5cb10ff75e6d87d9df6fbd53f0468c2905053",
+        "5f2391277b1dbd489000467e4c2fa6af802430080457dce2f618992e9dfb5402"
+      ],
+      "required_libraries": [],
+      "source": "https://www.apkmirror.com/apk/google-inc/google-play-services/google-play-services-26-40-32-release/google-play-services-26-40-32-260400-995630914-android-apk-download/",
+      "validation": "APK signature and manifest verified; OEM runtime/login not verified",
+      "download_asset": "gms-arm64.apk.zip",
+      "download_bytes": 145386341,
+      "download_sha256": "b7a2a1e89fc76f45fcb4e88ece3262593cd8233850d4da1b9c507fd3cb122eb4"
+    },
+    {
+      "package": "com.android.vending",
+      "file": "play-store.apk",
+      "version_code": 85343540,
+      "version_name": "53.4.35-34 [0] [PR] 991305241",
+      "min_sdk": 34,
+      "target_sdk": 37,
+      "supported_api_min": 35,
+      "supported_api_max": 37,
+      "abis": [
+        "arm64-v8a",
+        "armeabi-v7a",
+        "x86",
+        "x86_64"
+      ],
+      "sha256": "afa76cefd051b13a4612cb11e22376a1dab58d244cd0dd5b83b940587adf2765",
+      "bytes": 78608207,
+      "certificate_lineage_sha256": [
+        "f0fd6c5b410f25cb25c3b53346c8972fae30f8ee7411df910480ad6b2d60db83",
+        "7ce83c1b71f3d572fed04c8d40c5cb10ff75e6d87d9df6fbd53f0468c2905053"
+      ],
+      "required_libraries": [],
+      "source": "https://www.apkmirror.com/apk/google-inc/google-play-store/google-play-store-53-4-35-release/google-play-store-53-4-35-34-0-pr-991305241-2-android-apk-download/",
+      "validation": "APK signature and manifest verified; OEM runtime/login not verified",
+      "download_asset": "play-store.apk.zip",
+      "download_bytes": 41789171,
+      "download_sha256": "675d731f966fd978f70b11aa6e4ae942ee13c95d6c13d6c2580e5cd224e27063"
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "google_policy": "所有已安装包名包含 google 的应用（不区分大小写，包括系统应用）自动加入；Play 商店额外加入。",
+  "apps": [
+    {"name":"Google Play 商店","package":"com.android.vending","group":"Google"},
+    {"name":"Chrome","package":"com.android.chrome","group":"浏览器"},
+    {"name":"ChatGPT","package":"com.openai.chatgpt","group":"AI"},
+    {"name":"Claude","package":"com.anthropic.claude","group":"AI"},
+    {"name":"Grok","package":"ai.x.grok","group":"AI"},
+    {"name":"Gemini","package":"com.google.android.apps.bard","group":"AI"},
+    {"name":"Perplexity","package":"ai.perplexity.app.android","group":"AI"},
+    {"name":"Instagram","package":"com.instagram.android","group":"社交"},
+    {"name":"X","package":"com.twitter.android","group":"社交"},
+    {"name":"Telegram","package":"org.telegram.messenger","group":"社交"},
+    {"name":"Discord","package":"com.discord","group":"社交"},
+    {"name":"Reddit","package":"com.reddit.frontpage","group":"社交"},
+    {"name":"Facebook","package":"com.facebook.katana","group":"社交"},
+    {"name":"WhatsApp","package":"com.whatsapp","group":"社交"},
+    {"name":"TikTok","package":"com.ss.android.ugc.trill","group":"社交"},
+    {"name":"YouTube","package":"com.google.android.youtube","group":"流媒体"},
+    {"name":"YouTube Music","package":"com.google.android.apps.youtube.music","group":"流媒体"},
+    {"name":"Netflix","package":"com.netflix.mediaclient","group":"流媒体"},
+    {"name":"Spotify","package":"com.spotify.music","group":"流媒体"},
+    {"name":"Disney+","package":"com.disney.disneyplus","group":"流媒体"}
+  ]
+}
