@@ -9,7 +9,14 @@
 3. 双击 **`install.cmd`**。程序会先检测国家反诈中心APP；如已安装，显示红色隐私风险提醒，输入 **`1` 或直接回车卸载后继续**，输入 **`2` 保留并继续**。卸载会删除当前用户下的应用和本地数据，失败也会继续。之后检测 Google 组件缺失项，自动匹配 Android 15/16/17 正式版与 ARM 架构，已有组件不覆盖。
 4. 缺少安装包时，输入 **`1` 自动下载**，或 **`2` 手动下载**。手动下载或自动下载失败时，按回车打开下载页面，下载 **`AndroidCoolNet-Google-Offline-v0.4.1.zip`（约 181 MiB）**，回到命令行粘贴 ZIP 路径即可，**无需解压**。也支持文件夹，或多个 APK/ZIP 路径用分号隔开，不要求顺序；留空可跳过补装。
 5. 按提示粘贴 **Clash/Mihomo HTTPS 机场订阅链接**。需为包含节点列表的 Clash YAML；留空、下载或解析失败会跳过导入，可稍后在手机手动配置。自动配置期间不要操作手机界面。
-6. 完成后在 Clash 首页启动连接，并确认首次 VPN 授权。**以后新安装的应用，需要到「Clash 设置 > 网络 > 允许访问列表」自行勾选。**
+6. **手动配置覆写设置**：如果上一步跳过了订阅导入，先在手机 Clash 中手动导入可用订阅或节点。进入 **「Clash 设置 > 覆写（Override）」**，设置以下项目：
+
+   - **模式（Mode）**：规则（Rule）。
+   - **IPv6**：禁用（Disabled）。
+   - **DNS > 策略（Strategy）**：强制启用（Force Enable）；**DNS > IPv6**：禁用（Disabled）；**DNS > 增强模式（Enhanced Mode）**：Fake-IP。
+   - **DNS > 名称服务器（Name Server）**：可选择一个或多个当前网络可用的地址，点击 `+` 逐个添加，不限于 `8.8.8.8`：[8.8.8.8](https://developers.google.com/speed/public-dns/docs/using)、[1.1.1.1](https://developers.cloudflare.com/1.1.1.1/ip-addresses/)、[185.222.222.222](https://dns.sb/)、[208.67.222.222](https://www.opendns.com/setupguide/)、[77.88.8.8](https://dns.yandex.com/)。确认保存。
+
+7. 完成后在 Clash 首页启动连接，并确认首次 VPN 授权。**以后新安装的应用，需要到「Clash 设置 > 网络 > 允许访问列表」自行勾选。**
 
 手动导入路径示例：
 
