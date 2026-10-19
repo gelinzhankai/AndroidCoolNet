@@ -14,7 +14,7 @@
    - **模式（Mode）**：规则（Rule）。
    - **IPv6**：禁用（Disabled）。
    - **DNS > 策略（Strategy）**：强制启用（Force Enable）；**DNS > IPv6**：禁用（Disabled）；**DNS > 增强模式（Enhanced Mode）**：Fake-IP。
-   - **DNS > 名称服务器（Name Server）**：可选择一个或多个当前网络可用的地址，点击 `+` 逐个添加，不限于 `8.8.8.8`：[8.8.8.8](https://developers.google.com/speed/public-dns/docs/using)、[1.1.1.1](https://developers.cloudflare.com/1.1.1.1/ip-addresses/)、[185.222.222.222](https://dns.sb/)、[208.67.222.222](https://www.opendns.com/setupguide/)、[77.88.8.8](https://dns.yandex.com/)。确认保存。
+   - **DNS > 名称服务器（Name Server）**：可选择一个或多个当前网络可用的地址，点击 `+` 逐个添加，（通常单个8.8.8.8即可）：[8.8.8.8](https://developers.google.com/speed/public-dns/docs/using)、[1.1.1.1](https://developers.cloudflare.com/1.1.1.1/ip-addresses/)、[185.222.222.222](https://dns.sb/)、[208.67.222.222](https://www.opendns.com/setupguide/)、[77.88.8.8](https://dns.yandex.com/)。确认保存。
 
 7. 完成后在 Clash 首页启动连接，并确认首次 VPN 授权。**以后新安装的应用，需要到「Clash 设置 > 网络 > 允许访问列表」自行勾选。**
 
