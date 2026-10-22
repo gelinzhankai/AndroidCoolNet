@@ -12,8 +12,8 @@ import webbrowser
 import zipfile
 import zlib
 
-RELEASE_PAGE = "https://github.com/gelinzhankai/AndroidCoolNet/releases/tag/v0.4.1"
-ASSET_BASE = "https://github.com/gelinzhankai/AndroidCoolNet/releases/download/v0.4.1/"
+RELEASE_PAGE = "https://github.com/gelinzhankai/AndroidCoolNet/releases/tag/v0.5.0"
+ASSET_BASE = "https://github.com/gelinzhankai/AndroidCoolNet/releases/download/v0.5.0/"
 LABELS = {"com.google.android.gsf": "Google 服务框架", "com.google.android.gms": "Google Play 服务",
           "com.android.vending": "Google Play 商店"}
 MAX_ARCHIVE = 512 * 1024 * 1024

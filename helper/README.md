@@ -1,0 +1,11 @@
+# Clipboard helper
+
+Build with `helper/Build-Helper.ps1` (JDK 21, Android SDK/build-tools 35). It writes a signed ~13 KB APK to `cache/androidcoolnet-clipboard.apk` and updates the pinned SHA-256 in `config/clipboard-helper.json`. The signing keystore and intermediate files remain under ignored `private/`; do not publish them. The Windows distribution includes the APK, so end users need neither Java nor an Android SDK.
+
+The activity requires the Android `DUMP` permission to launch (available to ADB shell; ordinary apps cannot invoke it). It runs in the foreground, exchanges UTF-8 clipboard text using public Android APIs, and exposes a nonce-bound result to UI Automator. It requests no network, storage, accessibility or root permission. It never logs clipboard content, persists it to disk, or reads the user's old clipboard for backup. Import replaces the phone clipboard with the generated package list; export reads only after a fresh sentinel and a Clash export action.
+
+The installer verifies the APK hash, refuses to replace any already-present helper (including another user's installation), and uninstalls only a helper installed by the current run. If disconnected or interrupted during cleanup, it tells the user to remove the helper manually. A forced process kill or USB disconnect may leave the temporary app installed; the next run will not silently overwrite it.
+
+CMFA v2.11.35's Access Control menu supports newline-separated package import/export under **More > External**. It replaces the selected set and intersects it with the displayed application inventory, so system filtering must be disabled first. Override has no equivalent import API: the installer uses its normal settings controls and pastes DNS addresses, then exits and reopens to verify persistence. It does not write private CMFA files, inject a VPN approval, or use root.
+
+Sources: [AccessControlActivity](https://github.com/MetaCubeX/ClashMetaForAndroid/blob/v2.11.35/app/src/main/java/com/github/kr328/clash/AccessControlActivity.kt), [AccessControlMenu](https://github.com/MetaCubeX/ClashMetaForAndroid/blob/v2.11.35/design/src/main/java/com/github/kr328/clash/design/component/AccessControlMenu.kt), [OverrideSettingsActivity](https://github.com/MetaCubeX/ClashMetaForAndroid/blob/v2.11.35/app/src/main/java/com/github/kr328/clash/OverrideSettingsActivity.kt).

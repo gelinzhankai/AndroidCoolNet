@@ -8,7 +8,7 @@ import tempfile
 import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
-VERSION = sys.argv[1] if len(sys.argv) > 1 else 'v0.4.1'
+VERSION = sys.argv[1] if len(sys.argv) > 1 else 'v0.5.0'
 DIST = ROOT / 'dist' / VERSION
 
 
@@ -26,9 +26,13 @@ with tempfile.TemporaryDirectory(prefix='AndroidCoolNet-release-') as temp:
     with zipfile.ZipFile(DIST/f'AndroidCoolNet-Windows-{VERSION}.zip') as archive:
         names = archive.namelist()
         assert not any('cache/gms/' in n or 'x86_64-release.apk' in n or '/tests/' in n or '/reports/' in n for n in names)
-        assert sum(n.endswith('.apk') for n in names) == 1
+        assert sum(n.endswith('.apk') for n in names) == (2 if VERSION == 'v0.5.0' else 1)
         archive.extractall(dest)
     app = dest/'AndroidCoolNet'
+    if VERSION == 'v0.5.0':
+        helper_meta = json.loads((app/'config/clipboard-helper.json').read_text())
+        assert sha(app/'cache/androidcoolnet-clipboard.apk') == helper_meta['sha256']
+        assert (app/'config/override.yaml').is_file()
     if VERSION == 'v0.4.1':
         assert (app/'PRIVACY_NOTICE.md').is_file()
     manifest = json.loads((app/'SHA256.json').read_text())

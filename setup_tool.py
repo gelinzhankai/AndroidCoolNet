@@ -2,9 +2,11 @@
 from __future__ import annotations
 
 import argparse
+import base64
 import contextlib
 import hashlib
 import http.server
+import ipaddress
 import json
 import os
 from pathlib import Path
@@ -269,6 +271,104 @@ def choose_whitelist(installed, template):
     return sorted(p for p in installed if "google" in p.lower() or p == "com.android.vending" or p in template)
 
 
+def load_override_settings(path):
+    try:
+        settings = yaml.safe_load(path.read_text(encoding="utf-8-sig"))
+        if not isinstance(settings, dict) or set(settings) != {"nameserver"}:
+            raise ValueError()
+        servers = settings["nameserver"]
+        if not isinstance(servers, list) or not 1 <= len(servers) <= 10:
+            raise ValueError()
+        if any(not isinstance(value, str) for value in servers):
+            raise ValueError()
+        for value in servers:
+            ipaddress.ip_address(value)
+        if len(set(servers)) != len(servers):
+            raise ValueError()
+        return servers
+    except (OSError, ValueError, yaml.YAMLError):
+        raise SetupError("覆写模板无效：config/override.yaml 的 nameserver 需要 1～10 个不重复的 IP 地址。") from None
+
+
+class ClipboardBridge:
+    package = "io.github.gelinzhankai.androidcoolnet.clipboard"
+
+    def __init__(self, adb):
+        self.adb = adb
+        self.installed_here = False
+        self.cleanup_status = "not_installed"
+
+    def install(self):
+        # Never overwrite an existing app, or later uninstall an app we did not install.
+        if self.package in self.adb.packages("-u"):
+            raise SetupError("手机已有 AndroidCoolNet 临时助手，请先自行卸载后重试；本次不会覆盖或卸载它。")
+        try:
+            meta = json.loads((ROOT / "config/clipboard-helper.json").read_text(encoding="utf-8"))
+            apk = ROOT / "cache/androidcoolnet-clipboard.apk"
+            if meta["package"] != self.package or hashlib.sha256(apk.read_bytes()).hexdigest() != meta["sha256"]:
+                raise ValueError()
+        except (OSError, ValueError, KeyError, TypeError):
+            raise SetupError("临时助手缺失或校验失败，请重新下载完整基础包。") from None
+        say("安装临时剪贴板助手（无需 root）；若手机询问 USB 安装，请确认。完成后自动卸载。")
+        result = self.adb.run("install", "--no-streaming", "-R", "--user", "0", str(apk), timeout=120)
+        if not re.search(r"^Success\s*$", result, re.M):
+            raise SetupError("临时助手安装失败；可按 README 手动导入白名单并设置覆写。")
+        self.installed_here = True
+
+    def exchange(self, operation, text=None):
+        nonce = secrets.token_hex(12)
+        args = ["am", "start", "-W", "--user", "0", "-n", self.package + "/.ClipboardActivity",
+                "--es", "operation", operation, "--es", "nonce", nonce]
+        if text is not None:
+            payload = base64.b64encode(text.encode("utf-8")).decode("ascii")
+            if len(payload) > 48000:
+                raise SetupError("剪贴板名单过长，已停止自动导入。")
+            args.extend(["--es", "payload", payload])
+        self.adb.shell(*args)
+        ui = UI(self.adb)
+        try:
+            for _ in range(3):
+                ui.dump()
+                values = [n.get("content-desc", "") for n in ui.nodes() if n.get("package") == self.package]
+                value = next((v for v in values if v.startswith("ACN:" + nonce + ":")), None)
+                if value is not None:
+                    prefix = "ACN:" + nonce + ":OK:"
+                    if not value.startswith(prefix):
+                        break
+                    try:
+                        decoded = base64.b64decode(value[len(prefix):], validate=True).decode("utf-8")
+                    except (ValueError, UnicodeError):
+                        break
+                    if text is not None and decoded != text:
+                        break
+                    return decoded
+                time.sleep(.4)
+            raise SetupError("无法确认手机剪贴板内容；已停止导入，不会继续盲点。")
+        finally:
+            # Close only our own foreground activity, never send BACK to an unknown screen.
+            if ui.root is not None and any(n.get("package") == self.package for n in ui.nodes()):
+                ui.back()
+                time.sleep(.3)
+
+    def write(self, text):
+        return self.exchange("write", text)
+
+    def read(self):
+        return self.exchange("read")
+
+    def cleanup(self):
+        if not self.installed_here:
+            return
+        try:
+            # The package was absent even with -u before this run installed it.
+            result = self.adb.run("uninstall", self.package, timeout=60, check=False)
+            self.cleanup_status = "removed" if "Success" in result and self.package not in self.adb.packages("-u") else "failed"
+        except (SetupError, OSError):
+            self.cleanup_status = "failed"
+        if self.cleanup_status == "failed":
+            say("临时助手未能自动卸载，请在手机应用管理中卸载 AndroidCoolNet 临时助手。")
+
+
 class Adb:
     def __init__(self, executable, serial):
         self.exe, self.serial = str(executable), serial
@@ -497,8 +597,9 @@ def install_client(adb, device, installed, proxy=None):
 
 
 class UI:
-    def __init__(self, adb):
+    def __init__(self, adb, clipboard=None):
         self.adb = adb
+        self.clipboard = clipboard
         self.root = None
 
     def dump(self):
@@ -560,6 +661,8 @@ class UI:
                 raise SetupError("Clash 正在运行；请先在手机中停止，再执行配置。")
 
     def configure_whitelist(self, desired, replace=True):
+        if self.clipboard is None:
+            raise SetupError("批量导入白名单需要临时剪贴板助手。")
         self.home()
         self.click("Settings", "设置")
         self.click("Network", "网络")
@@ -601,45 +704,151 @@ class UI:
             self.tap(system)
         else:
             self.back()
-        # Replace the selected list with the explicit template and discovered Google packages.
-        if replace:
-            self.click("More", "更多", rid="menu_view")
-            self.click("Select none", "Select None", "清除")
-        selected = []
-        unavailable = []
-        for package in desired:
-            say("  白名单：" + package)
-            self.click("Search", "查找", rid="search_view")
-            self.dump()
-            field = self.find(rid="keyword_view", cls="android.widget.EditText")
-            self.tap(field)
-            self.adb.shell("input", "text", package)
-            self.dump()
-            label = self.find(package)
-            if label is None:
-                # CMFA excludes packages without INTERNET permission; retain this in report.
-                unavailable.append(package)
-            else:
-                row = self.row(label)
-                checkbox = next((n for n in row.iter("node") if n.get("checkable") == "true"), None)
-                if checkbox is None:
-                    raise SetupError("找不到应用白名单复选框。")
-                if checkbox.get("checked") != "true":
-                    self.tap(label)
-                self.dump()
-                label = self.find(package)
-                row = self.row(label)
-                if not any(n.get("checked") == "true" for n in row.iter("node")):
-                    raise SetupError("白名单勾选未生效。")
-                selected.append(package)
-            self.click("Close", "关闭", rid="close_view")
+        # Confirm the filter after any toggle, rather than assuming the tap took effect.
+        self.click("More", "更多", rid="menu_view")
+        self.click("Filter", "过滤")
+        self.dump()
+        system = self.find("System Apps", "系统应用")
+        check = next((n for n in self.row(system).iter("node") if n.get("checkable") == "true"), None)
+        if check is None or check.get("checked") != "false":
+            raise SetupError("系统应用仍被过滤，已停止白名单导入。")
+        self.back()
+        expected = set(desired)
+        if not replace:
+            expected |= self.export_whitelist()
+        if not expected or any(not re.fullmatch(r"[A-Za-z0-9_]+(?:\.[A-Za-z0-9_]+)*", p) for p in expected):
+            raise SetupError("白名单包名无效或为空，已停止导入。")
+        self.clipboard.write("\n".join(sorted(expected)))
+        self.clipboard_menu("import")
+        selected = self.export_whitelist()
+        if not selected or selected - expected:
+            raise SetupError("白名单导入校验失败；请核对手机当前勾选，工具未宣告成功。")
+        unavailable = sorted(expected - selected)
         self.back()  # AccessControlActivity persists on exit.
         self.dump()
         if self.find("Allow selected apps", "仅允许已选择的应用") is None:
             raise SetupError("白名单模式未保存。")
+        self.click("Access Control Packages", "访问控制应用包列表")
+        if self.export_whitelist() != selected:
+            raise SetupError("重新进入后白名单不一致，保存未通过校验。")
         self.back()
         self.back()
-        return selected, unavailable
+        self.back()
+        say(f"白名单批量导入并重新打开核对：{len(selected)} 个应用。")
+        return sorted(selected), unavailable
+
+    def clipboard_menu(self, operation):
+        self.click("More", "更多", rid="menu_view")
+        self.click("External", "外部")
+        if operation == "import":
+            self.click("Import from Clipboard", "从剪切板导入", "从剪贴板导入")
+        else:
+            self.click("Export to Clipboard", "导出至剪切板", "导出至剪贴板")
+
+    def export_whitelist(self):
+        # A sentinel makes a failed Export distinguishable from a stale clipboard.
+        self.clipboard.write("ACN_EXPORT:" + secrets.token_hex(8))
+        self.clipboard_menu("export")
+        text = self.clipboard.read()
+        packages = set(text.splitlines()) if text else set()
+        if any(not re.fullmatch(r"[A-Za-z0-9_]+(?:\.[A-Za-z0-9_]+)*", p) for p in packages):
+            raise SetupError("无法读取客户端导出的白名单，已停止自动操作。")
+        return packages
+
+    def preference_row(self, label):
+        parents = {c: p for p in self.root.iter() for c in p}
+        while label is not None:
+            if label.get("clickable") == "true":
+                return label
+            label = parents.get(label)
+        raise SetupError("无法定位覆写设置行。")
+
+    def seek_preference(self, *labels):
+        previous = None
+        for _ in range(18):
+            self.dump()
+            scroll = next((n for n in self.nodes() if n.get("scrollable") == "true"), None)
+            label = self.find(*labels)
+            if label is not None:
+                box = list(map(int, re.findall(r"\d+", label.get("bounds", ""))))
+                viewport = list(map(int, re.findall(r"\d+", scroll.get("bounds", "")))) if scroll is not None else []
+                if len(box) == 4 and box[3] > box[1] and (not viewport or
+                        viewport[1] + 140 <= (box[1]+box[3])//2 <= viewport[3] - 140):
+                    return label
+            signature = [(n.get("text"), n.get("bounds")) for n in self.nodes()]
+            if scroll is None or signature == previous:
+                break
+            previous = signature
+            b = list(map(int, re.findall(r"\d+", scroll.get("bounds", ""))))
+            if len(b) != 4 or b[3] - b[1] < 120:
+                break
+            # Stay away from the Android gesture-navigation edge, including edge-to-edge layouts.
+            self.adb.shell("input", "swipe", (b[0]+b[2])//2, b[3]-max(140, (b[3]-b[1])//8),
+                           (b[0]+b[2])//2, b[1]+(b[3]-b[1])//3, 350)
+        raise SetupError("未找到覆写项：" + labels[0] + "；已停止自动操作。")
+
+    def override_choice(self, labels, values, verify=False):
+        label = self.seek_preference(*labels)
+        texts = {n.get("text") for n in self.preference_row(label).iter("node")}
+        if texts.intersection(values):
+            return
+        if verify:
+            raise SetupError("覆写保存校验失败：" + labels[0])
+        self.tap(label)
+        self.click(*values)
+        self.dump()
+        label = self.find(*labels)
+        if label is None or not {n.get("text") for n in self.preference_row(label).iter("node")}.intersection(values):
+            raise SetupError("覆写设置未生效：" + labels[0])
+
+    def configure_override(self, nameservers):
+        if self.clipboard is None:
+            raise SetupError("覆写自动配置需要临时剪贴板助手。")
+        for verify in (False, True):
+            self.home()
+            self.click("Settings", "设置")
+            self.click("Override", "覆写")
+            # Ordered traversal distinguishes global IPv6 from the DNS IPv6 row.
+            self.override_choice(("IPv6",), ("Disabled", "已禁用", "禁用"), verify)
+            self.override_choice(("Mode", "模式"), ("Rule Mode", "规则模式"), verify)
+            self.override_choice(("Strategy", "策略"), ("Force Enable", "强制启用"), verify)
+            self.override_choice(("IPv6",), ("Disabled", "已禁用", "禁用"), verify)
+            self.override_choice(("Enhanced Mode", "增强模式"),
+                                 ("Fake-IP to domain mapping", "Fake-IP 至 域名映射"), verify)
+            self.tap(self.seek_preference("Name Server", "名称服务器"))
+            self.configure_nameservers(nameservers, verify=verify)
+            self.back()  # OverrideSettingsActivity persists on exit.
+            self.back()
+        return {"status": "verified", "mode": "rule", "ipv6": False,
+                "dns": {"enable": True, "ipv6": False, "enhanced-mode": "fake-ip", "nameserver": nameservers}}
+
+    def configure_nameservers(self, nameservers, verify=False):
+        self.dump()
+        def values():
+            return [n.get("text", "") for n in self.nodes()
+                    if n.get("resource-id", "").endswith(":id/text_view")]
+        current = values()
+        if current == nameservers:
+            self.click("OK", "确定", "确认")
+            return
+        if verify:
+            raise SetupError("覆写名称服务器保存校验失败。")
+        for _ in range(100):
+            remove = self.find(rid="delete_view")
+            if remove is None:
+                break
+            self.tap(remove)
+            self.dump()
+        else:
+            raise SetupError("名称服务器列表过长，已停止修改。")
+        for server in nameservers:
+            self.click("New", "新建", rid="new_view")
+            self.replace_text(server)
+            self.click("OK", "确定", "确认")
+        self.dump()
+        if values() != nameservers:
+            raise SetupError("名称服务器列表内容不一致，已停止保存。")
+        self.click("OK", "确定", "确认")
 
     def row(self, node):
         if node is None:
@@ -692,6 +901,9 @@ class UI:
         return "imported"
 
     def replace_text(self, text):
+        if self.clipboard is None:
+            raise SetupError("文本粘贴需要临时剪贴板助手，已停止键盘输入。")
+        self.clipboard.write(text)
         self.dump()
         field = self.find(cls="android.widget.EditText")
         self.tap(field)
@@ -703,7 +915,7 @@ class UI:
         if field is None:
             raise SetupError("文本编辑框消失。")
         # UIAutomator exposes EditText's hint as text when the field is empty.
-        empty_texts = ("", "Properties", "参数")
+        empty_texts = ("", "Properties", "参数", "Name Server", "名称服务器")
         if field.get("text", "") not in empty_texts:
             # Older Android versions lack keycombination; inject separate events.
             self.adb.shell("input", "keyevent", "KEYCODE_MOVE_END")
@@ -712,12 +924,12 @@ class UI:
             self.dump()
             field = self.find(cls="android.widget.EditText")
             if field is None or field.get("text", "") not in empty_texts:
-                raise SetupError("无法清空配置名称。")
-        self.adb.shell("input", "text", text)
+                raise SetupError("无法清空文本框。")
+        self.adb.shell("input", "keyevent", "KEYCODE_PASTE")
         self.dump()
         field = self.find(cls="android.widget.EditText")
         if field is None or field.get("text") != text:
-            raise SetupError("配置名称输入未生效。")
+            raise SetupError("粘贴后的文本不一致，已停止保存。")
 
     def profile_menu(self, name):
         label = self.find_profile(name)
@@ -816,6 +1028,7 @@ def main(argv=None):
     parser.add_argument("--allowlist", type=Path, default=ROOT / "config" / "apps.json")
     parser.add_argument("--rules", type=Path, default=ROOT / "config" / "rules.json")
     parser.add_argument("--profile-settings", type=Path, default=ROOT / "config" / "profile.yaml")
+    parser.add_argument("--override-settings", type=Path, default=ROOT / "config" / "override.yaml")
     args = parser.parse_args(argv)
     adb_path = find_adb(args.adb)
     serial = select_device(adb_path, args.serial)
@@ -846,6 +1059,7 @@ def main(argv=None):
     desired = choose_whitelist(installed, {a["package"] for a in catalog["apps"]})
     if not desired:
         raise SetupError("未找到白名单应用。")
+    nameservers = load_override_settings(args.override_settings)
     proxies, subscription_status = load_subscription(args.profile_file, args.pc_download_proxy)
     content, name, profile_status = None, None, "skipped"
     if proxies is not None:
@@ -853,19 +1067,39 @@ def main(argv=None):
         content = make_profile(proxies, rules, load_profile_settings(args.profile_settings))
         name = "AndroidSetup-" + hashlib.sha256(content).hexdigest()[:10]
     install_status = install_client(adb, device, installed, args.pc_download_proxy)
-    ui = UI(adb)
+    clipboard = ClipboardBridge(adb)
+    ui = UI(adb, clipboard)
     say(f"准备配置 {len(desired)} 个白名单包；手机请保持解锁，不要手动操作界面。")
     eligible, no_network_permission = adb.network_candidates(desired)
     say(f"其中 {len(eligible)} 个需在客户端确认（含共享 UID）；其余无网络权限包由客户端过滤。")
-    selected, unavailable = ui.configure_whitelist(eligible)
-    if content is not None:
-        with serve_profile(adb, content) as url:
-            profile_status = ui.activate_or_import(name, url)
+    report_dir = ROOT / "reports"
+    report_dir.mkdir(exist_ok=True)
+    manual_list = report_dir / "whitelist.txt"
+    manual_list.write_text("\n".join(eligible), encoding="utf-8")
+    say(f"手动导入备用名单：{manual_list}（每行一个包名，需复制到手机剪贴板后导入）。")
+    override_result = {"status": "not_started"}
+    try:
+        clipboard.install()
+        selected, unavailable = ui.configure_whitelist(eligible)
+        say("配置手机覆写并核对保存结果…")
+        override_result = {"status": "in_progress"}
+        override_result = ui.configure_override(nameservers)
+        if content is not None:
+            with serve_profile(adb, content) as url:
+                profile_status = ui.activate_or_import(name, url)
+    except (SetupError, OSError, KeyboardInterrupt):
+        save_report({"phase": "client_configuration", "status": "incomplete", "serial": serial,
+                     "override": override_result, "whitelist_template": str(manual_list)})
+        say("自动配置未全部完成；请按 README 手动导入名单并核对覆写。已完成的设置可能已保存。")
+        raise
+    finally:
+        clipboard.cleanup()
     report = {"device": device, "serial": serial, "client_version": VERSION,
               "privacy_check": privacy_result,
               "google_install": google_result,
               "install": install_status, "profile": name, "profile_status": profile_status,
               "subscription_status": subscription_status,
+              "override": override_result, "clipboard_helper_cleanup": clipboard.cleanup_status,
               "whitelist_selected": selected, "not_selectable_in_cmfa": unavailable,
               "google_and_template_candidates": desired, "no_network_permission": no_network_permission,
               "vpn": "manual_authorization_and_start_required" if content is not None else "existing_profile_unchanged_or_import_required",
@@ -891,11 +1125,9 @@ def main(argv=None):
         }
         say("需要手动处理：" + reasons.get(subscription_status, "订阅导入已跳过") + "。")
         say("若已有可用节点配置可继续使用；若没有，请先在 Clash 中手动导入有效订阅/节点。")
-        say("本次没有应用规则模式和 DNS 模板，也没有修改手机覆写设置。请自行在 Clash 设置 > 覆写中核对：")
-        say("  模式：规则（Rule）；IPv6：禁用。")
-        say("  DNS > 策略：强制启用；DNS > IPv6：禁用；增强模式：Fake-IP。")
-        say("  DNS > Name Server（名称服务器）：列表设置为 8.8.8.8。")
         say("仅设置 DNS/规则模式不能代替代理节点；有可用配置后再启动 Clash，并确认首次 VPN 授权。")
+    say("覆写已保存并重新进入核对：规则模式、全局/DNS IPv6 禁用、DNS 强制启用、Fake-IP。")
+    say("覆写 DNS 名称服务器：" + ", ".join(nameservers))
     say("以后新安装的应用不会自动加入此次白名单：请到 Clash 设置 > 网络 > 允许访问列表，勾选需要代理的应用（必要时显示系统应用）。")
     say("修改允许访问列表后，若运行中的 VPN 未生效，请停止并重新启动 Clash。")
     if google_exit:

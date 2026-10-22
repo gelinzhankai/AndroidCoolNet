@@ -7,7 +7,7 @@ import shutil
 import zipfile
 
 ROOT = Path(__file__).resolve().parent
-VERSION = "v0.4.1"
+VERSION = "v0.5.0"
 DIST = ROOT / "dist" / VERSION
 STAMP = (2026, 10, 19, 0, 0, 0)
 
@@ -85,6 +85,10 @@ def main():
         paths.extend(p for p in (ROOT / directory).rglob("*")
                      if p.is_file() and "__pycache__" not in p.parts and p.suffix != ".pyc")
     paths.append(ROOT / "cache/cmfa-2.11.35-meta-arm64-v8a-release.apk")
+    helper = ROOT / "cache/androidcoolnet-clipboard.apk"
+    helper_meta = json.loads((ROOT / "config/clipboard-helper.json").read_text(encoding="utf-8"))
+    assert sha(helper) == helper_meta["sha256"], "Clipboard helper hash mismatch"
+    paths.append(helper)
     assert all(p.is_file() for p in paths)
     base = {"AndroidCoolNet/" + p.relative_to(ROOT).as_posix(): p for p in paths}
     manifest = {p.relative_to(ROOT).as_posix(): sha(p) for p in paths}

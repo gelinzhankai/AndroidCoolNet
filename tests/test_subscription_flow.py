@@ -15,7 +15,7 @@ VALID = b'proxies: [{name: local, type: http, server: 127.0.0.1, port: 19090}]'
 
 
 class SubscriptionFlowTests(unittest.TestCase):
-    def run_main(self, entered, payload=VALID, download_error=None, local_bad=False, antifraud_failure=None):
+    def run_main(self, entered, payload=VALID, download_error=None, local_bad=False, antifraud_failure=None, ui_failure=False):
         with tempfile.TemporaryDirectory() as tmp, contextlib.ExitStack() as stack:
             stack.enter_context(mock.patch.object(s, "ROOT", Path(tmp)))
             prompt = stack.enter_context(mock.patch("builtins.input", return_value=entered))
@@ -41,22 +41,40 @@ class SubscriptionFlowTests(unittest.TestCase):
                 {"model":"test", "android":"15", "api":35, "abis":["arm64-v8a"], "gms":{}}, installed)))
             google = stack.enter_context(mock.patch.object(s, "provision_google", return_value={"complete": True}))
             install = stack.enter_context(mock.patch.object(s, "install_client", return_value="installed"))
+            bridge = stack.enter_context(mock.patch.object(s, "ClipboardBridge")).return_value
+            bridge.cleanup_status = "removed"
             ui = stack.enter_context(mock.patch.object(s, "UI")).return_value
             ui.configure_whitelist.return_value = (["com.google.android.gms"], [])
             ui.activate_or_import.return_value = "imported"
+            ui.configure_override.return_value = {"status": "verified"}
+            if ui_failure:
+                ui.configure_override.side_effect = s.SetupError("override not saved")
             serve = stack.enter_context(mock.patch.object(s, "serve_profile"))
             serve.return_value.__enter__.return_value = "http://127.0.0.1/local-only"
             output = stack.enter_context(contextlib.redirect_stdout(io.StringIO()))
             args = ["--allowlist", str(ROOT/"config/apps.json"), "--rules", str(ROOT/"config/rules.json"),
-                    "--profile-settings", str(ROOT/"config/profile.yaml")]
+                    "--profile-settings", str(ROOT/"config/profile.yaml"),
+                    "--override-settings", str(ROOT/"config/override.yaml")]
             if local_bad:
                 path = Path(tmp)/"invalid.yaml"
                 path.write_text("proxies: [", encoding="utf-8")
                 args.extend(["--profile-file", str(path)])
+            if ui_failure:
+                with self.assertRaises(s.SetupError):
+                    s.main(args)
+                bridge.cleanup.assert_called_once()
+                ui.activate_or_import.assert_not_called()
+                report = next(r for p in (Path(tmp)/"reports").glob("*.json")
+                              if (r := json.loads(p.read_text(encoding="utf-8"))).get("phase") == "client_configuration")
+                self.assertEqual(report["status"], "incomplete")
+                self.assertNotIn("覆写已保存", output.getvalue())
+                return report, prompt, fetch
             self.assertEqual(s.main(args), 0)
             google.assert_called_once()
             install.assert_called_once()
             ui.configure_whitelist.assert_called_once()
+            ui.configure_override.assert_called_once_with(["8.8.8.8"])
+            bridge.cleanup.assert_called_once()
             report = next(r for p in (Path(tmp)/"reports").glob("*.json")
                           if "subscription_status" in (r := json.loads(p.read_text(encoding="utf-8"))))
             if report["profile_status"] == "skipped":
@@ -75,6 +93,9 @@ class SubscriptionFlowTests(unittest.TestCase):
         report, _, _ = self.run_main('https://example.test/subscription', antifraud_failure='Failure [DELETE_FAILED_DEVICE_POLICY_MANAGER]')
         self.assertEqual(report['privacy_check']['status'], 'failed')
         self.assertEqual(report['profile_status'], 'imported')
+
+    def test_override_failure_cleans_helper_and_never_reports_success(self):
+        self.run_main('', ui_failure=True)
 
     def test_uninstall_timeout_and_blank_subscription_still_configure_whitelist(self):
         report, _, _ = self.run_main('', antifraud_failure=s.SetupError('ADB 操作超时'))
