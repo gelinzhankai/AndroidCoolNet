@@ -447,6 +447,62 @@ def inspect_device(adb):
             "abis": adb.shell("getprop", "ro.product.cpu.abilist").split(","), "gms": gms}, installed
 
 
+def inspect_play_store(adb, device):
+    """Read-only launcher diagnosis; a resolved activity is not proof of a desktop icon."""
+    package = "com.android.vending"
+    state = device["gms"].get(package, "unknown")
+    result = {"package": package, "package_state": state, "status": state,
+              "component": None, "launch_status": "not_requested"}
+    hints = {
+        "missing": "未安装；按缺失组件流程匹配安装包。",
+        "disabled": "已安装但被停用；请在手机应用管理中启用 Play 商店，并检查 Google 基础服务开关（如有）。保留原版本及停用状态。",
+        "not_installed_for_user": "设备已有此包，主用户未安装；正常补装流程会尝试恢复已有版本，无需重新下载或覆盖 APK。",
+        "unknown": "安装状态未知，暂不判断启动入口。",
+    }
+    if state != "installed":
+        result["hint"] = hints.get(state, hints["unknown"])
+    else:
+        try:
+            result["system_app"] = package in adb.packages("-s")
+            output = adb.shell("cmd", "package", "resolve-activity", "--brief", "--user", "0",
+                               "-a", "android.intent.action.MAIN", "-c", "android.intent.category.LAUNCHER",
+                               "-p", package, include_stderr=True)
+            components = re.findall(r"^com\.android\.vending/[A-Za-z0-9_.$]+$", output, re.M)
+            if len(components) == 1:
+                result.update(status="launcher_available", component=components[0],
+                              hint="有可解析的启动入口；若桌面无图标，请检查桌面隐藏设置。可运行 install.cmd --open-play-store 单独尝试打开；入口存在不代表应用能正常运行或登录。")
+            elif output.strip() == "No activity found":
+                result.update(status="no_launcher", hint="已安装，但未找到启用的桌面启动入口。请检查应用/启动组件是否停用、Google 基础服务开关及 ROM 限制；不能据此判断 APK 损坏，不自动覆盖安装。")
+            else:
+                result.update(status="check_failed", hint="系统未返回可识别的启动入口结果；不据此判断缺失或重装。")
+        except SetupError:
+            result.update(status="check_failed", hint="启动入口检查失败；保留现有组件，继续后续流程。")
+    say("Play 商店：" + result["hint"])
+    if result.get("system_app"):
+        say("Play 商店属于系统应用；Clash 白名单需显示系统应用，本工具会按 com.android.vending 处理。")
+    return result
+
+
+def open_play_store(adb, diagnosis):
+    """Explicit opt-in launch only; never install, enable, or replace the package."""
+    result = dict(diagnosis)
+    if result["status"] != "launcher_available":
+        result["launch_status"] = "unavailable"
+        say("未打开 Play 商店：请先按上述检测提示处理。")
+        return result
+    try:
+        output = adb.shell("am", "start", "-W", "--user", "0",
+                           "-a", "android.intent.action.MAIN", "-c", "android.intent.category.LAUNCHER",
+                           "-n", result["component"], include_stderr=True)
+        accepted = bool(re.search(r"^Status: ok\s*$", output, re.M)) and not re.search(r"Error|Exception", output)
+        result["launch_status"] = "request_accepted" if accepted else "failed"
+    except SetupError:
+        result["launch_status"] = "failed"
+    say("系统已接受启动请求，请查看手机画面；未验证登录、联网或应用是否闪退。"
+        if result["launch_status"] == "request_accepted" else "Play 商店启动失败；请检查手机提示、应用状态及 ROM 限制，不自动重装。")
+    return result
+
+
 def select_google_apk(entries, package, device):
     """Match only the deliberately bounded catalog, never guess from an APK filename."""
     if device["api"] not in (35, 36, 37) or device.get("preview_sdk", 0):
@@ -1020,6 +1076,7 @@ def main(argv=None):
     parser.add_argument("--serial")
     parser.add_argument("--adb")
     parser.add_argument("--detect-only", action="store_true")
+    parser.add_argument("--open-play-store", action="store_true", help="仅检查并尝试打开已有 Play 商店，不安装或更改应用设置")
     gms_options = parser.add_mutually_exclusive_group()
     gms_options.add_argument("--gms-only", action="store_true", help="仅检测及补装 Google 组件，不处理 Clash/订阅")
     gms_options.add_argument("--skip-gms", action="store_true", help="跳过 Google 补装，仍检测组件状态")
@@ -1030,12 +1087,19 @@ def main(argv=None):
     parser.add_argument("--profile-settings", type=Path, default=ROOT / "config" / "profile.yaml")
     parser.add_argument("--override-settings", type=Path, default=ROOT / "config" / "override.yaml")
     args = parser.parse_args(argv)
+    if args.open_play_store and (args.detect_only or args.gms_only or args.skip_gms):
+        parser.error("--open-play-store 请单独使用，不与 --detect-only/--gms-only/--skip-gms 组合")
     adb_path = find_adb(args.adb)
     serial = select_device(adb_path, args.serial)
     adb = Adb(adb_path, serial)
     device, installed = inspect_device(adb)
     say(f"设备：{device['model']} / Android {device['android']}（API {device['api']}）/ {serial}")
     say("CPU 架构：" + ", ".join(device['abis']))
+    play_store = inspect_play_store(adb, device)
+    if args.open_play_store:
+        play_store = open_play_store(adb, play_store)
+        save_report({"phase": "play_store", "serial": serial, "device": device, "play_store": play_store})
+        return 0 if play_store["launch_status"] == "request_accepted" else 2
     privacy_result = optional_antifraud_removal(adb, installed, detect_only=args.detect_only)
     if not args.detect_only and privacy_result["status"] != "not_installed":
         save_report({"phase": "privacy", "serial": serial, "privacy_check": privacy_result})
@@ -1048,10 +1112,11 @@ def main(argv=None):
         return 0
     google_result = {"skipped": True, "complete": False} if args.skip_gms else provision_google(adb, device, proxy=args.pc_download_proxy)
     if not args.skip_gms:
+        device, installed = inspect_device(adb)
+        play_store = inspect_play_store(adb, device)
         # Persist even if a later subscription / UI step is cancelled or fails.
         save_report({"phase": "google", "serial": serial, "device": device, "google_install": google_result,
-                     "privacy_check": privacy_result})
-        device, installed = inspect_device(adb)
+                     "privacy_check": privacy_result, "play_store": play_store})
     google_exit = 0 if args.skip_gms or google_result["complete"] else 2
     if args.gms_only:
         return google_exit
@@ -1089,12 +1154,13 @@ def main(argv=None):
                 profile_status = ui.activate_or_import(name, url)
     except (SetupError, OSError, KeyboardInterrupt):
         save_report({"phase": "client_configuration", "status": "incomplete", "serial": serial,
-                     "override": override_result, "whitelist_template": str(manual_list)})
+                     "override": override_result, "whitelist_template": str(manual_list), "play_store": play_store})
         say("自动配置未全部完成；请按 README 手动导入名单并核对覆写。已完成的设置可能已保存。")
         raise
     finally:
         clipboard.cleanup()
     report = {"device": device, "serial": serial, "client_version": VERSION,
+              "play_store": play_store,
               "privacy_check": privacy_result,
               "google_install": google_result,
               "install": install_status, "profile": name, "profile_status": profile_status,

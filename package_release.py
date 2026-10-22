@@ -7,7 +7,7 @@ import shutil
 import zipfile
 
 ROOT = Path(__file__).resolve().parent
-VERSION = "v0.5.0"
+VERSION = "v0.5.1"
 DIST = ROOT / "dist" / VERSION
 STAMP = (2026, 10, 19, 0, 0, 0)
 

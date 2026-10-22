@@ -14,7 +14,7 @@ echo.
 pause
 exit /b 0
 :partial
-echo Google 组件未全部就绪，请查看上方原因和 reports 中的报告。已有组件未覆盖。
+echo 部分步骤未完成，请查看上方原因和 reports 中的报告。已有组件未覆盖。
 pause
 exit /b 2
 :fail

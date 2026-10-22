@@ -40,6 +40,7 @@ class SubscriptionFlowTests(unittest.TestCase):
             stack.enter_context(mock.patch.object(s, "inspect_device", return_value=(
                 {"model":"test", "android":"15", "api":35, "abis":["arm64-v8a"], "gms":{}}, installed)))
             google = stack.enter_context(mock.patch.object(s, "provision_google", return_value={"complete": True}))
+            stack.enter_context(mock.patch.object(s, "inspect_play_store", return_value={"status": "missing"}))
             install = stack.enter_context(mock.patch.object(s, "install_client", return_value="installed"))
             bridge = stack.enter_context(mock.patch.object(s, "ClipboardBridge")).return_value
             bridge.cleanup_status = "removed"

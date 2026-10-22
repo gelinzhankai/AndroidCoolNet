@@ -107,3 +107,10 @@
 - 模拟器飞行模式开启、Wi-Fi 关闭、HTTP 代理为空、默认网络为 none；配置传输仅走 ADB 映射的本地固定内容服务器，不经电脑代理，也不验证外网节点。未操作真实手机；未验证 Android 16/17、厂商 ROM、中文完整 UI 或真实账号登录。
 
 复现新增流程：先按共享模拟器说明启动并确认网络隔离，再运行 `tests/verify_clipboard_emulator.py`；加 `--skip-subscription` 验证订阅留空。仅接受固定模拟器 `emulator-5580`。助手构建见 `helper/README.md`，普通用户直接使用发布包。
+
+# v0.5.1 Play 商店启动入口验收（2026-10-22）
+
+- 80 项单元测试通过。新增覆盖安装状态分支、入口解析失败/超时、启动失败、检查模式无写入，以及单独打开命令不进入卸载、Google 补装或 Clash 安装流程。
+- `tests/verify_play_store_emulator.py` 在固定 API 35 模拟器以 shell UID 2000 实测：系统 Play 商店可解析入口，`--detect-only` 保持应用状态，`--open-play-store` 启动后商店 Activity 位于前台；Google 版本和启用状态、安装包集合不变，最后返回桌面。
+- 测试保持飞行模式、Wi-Fi 关闭、HTTP 代理为空、默认网络 none。首次测试脚本仅接受 `topResumedActivity:`，实际输出使用 `=`，修正兼容匹配后验收通过。未操作真实手机，也未验证账号登录、联网、厂商桌面隐藏图标或 Android 16/17。
+- 此版本仅更新 Windows 基础包；Google 组件下载和手动下载页面继续使用 v0.5.0，已有离线包可复用。安装器只报告启动请求是否被系统接受，不将其当作账号/联网可用证明。
