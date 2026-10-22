@@ -24,6 +24,7 @@ import xml.etree.ElementTree as ET
 
 import yaml
 from gms_assets import AssetError, ensure_google_assets, LABELS as GOOGLE_LABELS
+from ai_apps import provision_ai_apps
 
 ROOT = Path(__file__).resolve().parent
 PACKAGE = "com.github.metacubex.clash.meta"
@@ -1077,6 +1078,9 @@ def main(argv=None):
     parser.add_argument("--adb")
     parser.add_argument("--detect-only", action="store_true")
     parser.add_argument("--open-play-store", action="store_true", help="仅检查并尝试打开已有 Play 商店，不安装或更改应用设置")
+    parser.add_argument("--apps-only", action="store_true", help="仅处理可选 ChatGPT/Claude 安装，不处理卸载、Google 或 Clash")
+    parser.add_argument("--ai-apps", choices=("none", "chatgpt", "claude", "both"), help="选择可选 AI 应用；none 跳过，默认询问")
+    parser.add_argument("--app-file", action="append", default=[], help="已下载的固定版本 APKM/XAPK，可重复指定")
     gms_options = parser.add_mutually_exclusive_group()
     gms_options.add_argument("--gms-only", action="store_true", help="仅检测及补装 Google 组件，不处理 Clash/订阅")
     gms_options.add_argument("--skip-gms", action="store_true", help="跳过 Google 补装，仍检测组件状态")
@@ -1089,12 +1093,19 @@ def main(argv=None):
     args = parser.parse_args(argv)
     if args.open_play_store and (args.detect_only or args.gms_only or args.skip_gms):
         parser.error("--open-play-store 请单独使用，不与 --detect-only/--gms-only/--skip-gms 组合")
+    if args.apps_only and (args.detect_only or args.gms_only or args.skip_gms or args.open_play_store):
+        parser.error("--apps-only 请单独使用，不与其他单独检查/Google 模式组合")
     adb_path = find_adb(args.adb)
     serial = select_device(adb_path, args.serial)
     adb = Adb(adb_path, serial)
     device, installed = inspect_device(adb)
     say(f"设备：{device['model']} / Android {device['android']}（API {device['api']}）/ {serial}")
     say("CPU 架构：" + ", ".join(device['abis']))
+    if args.apps_only:
+        result = provision_ai_apps(adb, device, ROOT, args.ai_apps, args.app_file, args.pc_download_proxy)
+        save_report({"phase": "ai_apps", "serial": serial, "ai_apps": result})
+        say("仅应用安装流程结束；请到 Clash 设置 > 网络 > 允许访问列表勾选新应用，并按需重启 VPN。")
+        return 0 if result["complete"] else 2
     play_store = inspect_play_store(adb, device)
     if args.open_play_store:
         play_store = open_play_store(adb, play_store)
@@ -1120,6 +1131,9 @@ def main(argv=None):
     google_exit = 0 if args.skip_gms or google_result["complete"] else 2
     if args.gms_only:
         return google_exit
+    ai_result = provision_ai_apps(adb, device, ROOT, args.ai_apps, args.app_file, args.pc_download_proxy)
+    save_report({"phase": "ai_apps", "serial": serial, "ai_apps": ai_result})
+    device, installed = inspect_device(adb)
     catalog = json.loads(args.allowlist.read_text(encoding="utf-8-sig"))
     desired = choose_whitelist(installed, {a["package"] for a in catalog["apps"]})
     if not desired:
@@ -1154,13 +1168,15 @@ def main(argv=None):
                 profile_status = ui.activate_or_import(name, url)
     except (SetupError, OSError, KeyboardInterrupt):
         save_report({"phase": "client_configuration", "status": "incomplete", "serial": serial,
-                     "override": override_result, "whitelist_template": str(manual_list), "play_store": play_store})
+                     "override": override_result, "whitelist_template": str(manual_list), "play_store": play_store,
+                     "ai_apps": ai_result})
         say("自动配置未全部完成；请按 README 手动导入名单并核对覆写。已完成的设置可能已保存。")
         raise
     finally:
         clipboard.cleanup()
     report = {"device": device, "serial": serial, "client_version": VERSION,
               "play_store": play_store,
+              "ai_apps": ai_result,
               "privacy_check": privacy_result,
               "google_install": google_result,
               "install": install_status, "profile": name, "profile_status": profile_status,
@@ -1198,7 +1214,9 @@ def main(argv=None):
     say("修改允许访问列表后，若运行中的 VPN 未生效，请停止并重新启动 Clash。")
     if google_exit:
         say("Clash 流程已完成，但 Google 补装未完全完成（退出码 2），请查看 Google 阶段报告。")
-    return google_exit
+    if not ai_result["complete"]:
+        say("部分可选 AI 应用未安装成功，后续配置已继续；详见 AI 应用报告（退出码 2）。")
+    return google_exit or (0 if ai_result["complete"] else 2)
 
 
 if __name__ == "__main__":

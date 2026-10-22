@@ -7,7 +7,7 @@ import shutil
 import zipfile
 
 ROOT = Path(__file__).resolve().parent
-VERSION = "v0.5.1"
+VERSION = "v0.6.0"
 DIST = ROOT / "dist" / VERSION
 STAMP = (2026, 10, 19, 0, 0, 0)
 
@@ -79,7 +79,7 @@ def main():
     })
     assets.append(output)
 
-    names = ["install.cmd", "Prepare.ps1", "setup_tool.py", "gms_assets.py", "README.md", "TESTING.md", "PRIVACY_NOTICE.md"]
+    names = ["install.cmd", "Prepare.ps1", "setup_tool.py", "gms_assets.py", "ai_apps.py", "README.md", "TESTING.md", "PRIVACY_NOTICE.md"]
     paths = [ROOT / name for name in names]
     for directory in ("config", "runtime", "platform-tools"):
         paths.extend(p for p in (ROOT / directory).rglob("*")

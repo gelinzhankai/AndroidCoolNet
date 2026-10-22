@@ -1,0 +1,646 @@
+{
+  "schema": 1,
+  "apps": [
+    {
+      "id": "chatgpt",
+      "name": "ChatGPT",
+      "package": "com.openai.chatgpt",
+      "file": "chatgpt-1.2026.286.apkm",
+      "source": "https://www.apkmirror.com/apk/openai/chatgpt/chatgpt-1-2026-286-release/chatgpt-1-2026-286-android-apk-download/",
+      "provider": "apkmirror",
+      "archive_sha256": "f7c63001f38d916f643def5df7fb3b9cf8155f746221ba6221223c70f9528414",
+      "version_name": "1.2026.286",
+      "version_code": 2628614,
+      "min_sdk": 32,
+      "bytes": 95559093,
+      "certificate_sha256": "b24f4bfbb3cf293f938703b9d87027c1102cc36dc4fa206910e08927db40473c",
+      "parts": [
+        {
+          "file": "base.apk",
+          "bytes": 87482540,
+          "sha256": "1d432e4752c7287b4a88bb411b67e1a281164a1cd62a70783d3df4081928fa67",
+          "split": "",
+          "kind": "base",
+          "version_code": 2628614
+        },
+        {
+          "file": "split_config.arm64_v8a.apk",
+          "bytes": 21091465,
+          "sha256": "a9cc010c61d8318d4798bb1d05bda23363ef790da0bf26b88ffe0445b0c30c5d",
+          "split": "config.arm64_v8a",
+          "kind": "abi",
+          "abi": "arm64-v8a",
+          "version_code": 2628614
+        },
+        {
+          "file": "split_config.en.apk",
+          "bytes": 975058,
+          "sha256": "1dcc361886e1ab2b2c72e8135467e1bf7a9e76ca4e59384202e557c0c866eb07",
+          "split": "config.en",
+          "kind": "language",
+          "language": "en",
+          "version_code": 2628614
+        },
+        {
+          "file": "split_config.xxhdpi.apk",
+          "bytes": 88331,
+          "sha256": "def807114e6eae81e127449280dd62559fadfbf840e250974de6ec320bd89cc5",
+          "split": "config.xxhdpi",
+          "kind": "dpi",
+          "dpi": 480,
+          "version_code": 2628614
+        },
+        {
+          "file": "split_config.x86.apk",
+          "bytes": 20759537,
+          "sha256": "56f419cec715d91dc01b39f87f2cec6d99cac9512f051849aafa142c30bcb78c",
+          "split": "config.x86",
+          "kind": "abi",
+          "abi": "x86",
+          "version_code": 2628614
+        },
+        {
+          "file": "split_config.x86_64.apk",
+          "bytes": 23221349,
+          "sha256": "c439fd24710de793cfa6f13cf50efca7910bc9eb986d4366a8ddf9298e5911dc",
+          "split": "config.x86_64",
+          "kind": "abi",
+          "abi": "x86_64",
+          "version_code": 2628614
+        },
+        {
+          "file": "split_config.ar.apk",
+          "bytes": 1646802,
+          "sha256": "486359e577ad7c0056f3ff75a04dc4ce64ff7a019bf7b7d7c19ea72055ef8359",
+          "split": "config.ar",
+          "kind": "language",
+          "language": "ar",
+          "version_code": 2628614
+        },
+        {
+          "file": "split_config.xhdpi.apk",
+          "bytes": 75992,
+          "sha256": "8e9ccb7b4133967f244e624c7f3ad4b41edd1b0733b3525adf1f445da7b4c7a0",
+          "split": "config.xhdpi",
+          "kind": "dpi",
+          "dpi": 320,
+          "version_code": 2628614
+        },
+        {
+          "file": "split_config.de.apk",
+          "bytes": 692434,
+          "sha256": "898d6df6e422dca50f051e330c7b053f116ea8666c6331a4f9086e32f4aa134d",
+          "split": "config.de",
+          "kind": "language",
+          "language": "de",
+          "version_code": 2628614
+        },
+        {
+          "file": "split_config.armeabi_v7a.apk",
+          "bytes": 14845089,
+          "sha256": "076712ca9481811f178c179b7f6bbc676a48d5267f6c819fb578cc2a44ec5440",
+          "split": "config.armeabi_v7a",
+          "kind": "abi",
+          "abi": "armeabi-v7a",
+          "version_code": 2628614
+        },
+        {
+          "file": "split_config.es.apk",
+          "bytes": 1089746,
+          "sha256": "5aae44ccb838a6e286132252438fe7a6342b050b3e92f17e4025ba1698c640dd",
+          "split": "config.es",
+          "kind": "language",
+          "language": "es",
+          "version_code": 2628614
+        },
+        {
+          "file": "split_config.et.apk",
+          "bytes": 647378,
+          "sha256": "f15c19e9d597118cb1655556bdb007361ae10ef89dab53b3b810f6cacb08bf44",
+          "split": "config.et",
+          "kind": "language",
+          "language": "et",
+          "version_code": 2628614
+        },
+        {
+          "file": "split_config.fi.apk",
+          "bytes": 663762,
+          "sha256": "47b9eb2fcf6ed3b46ae5081d317cf9612e261a6b82e498829fb28bf4b7cb0989",
+          "split": "config.fi",
+          "kind": "language",
+          "language": "fi",
+          "version_code": 2628614
+        },
+        {
+          "file": "split_config.fr.apk",
+          "bytes": 1159378,
+          "sha256": "3dda854dbfb699478f52e75d6b509d7af029f817da8042057de7628f91675a3e",
+          "split": "config.fr",
+          "kind": "language",
+          "language": "fr",
+          "version_code": 2628614
+        },
+        {
+          "file": "split_config.hi.apk",
+          "bytes": 1032402,
+          "sha256": "c1a465ccb5903d2ede8ed40962763f53c02fa0b0680029c7384022a121b3595e",
+          "split": "config.hi",
+          "kind": "language",
+          "language": "hi",
+          "version_code": 2628614
+        },
+        {
+          "file": "split_config.hu.apk",
+          "bytes": 704722,
+          "sha256": "6f48ccd754c5a15a777fe329e0341bba408041eca283afe03ce4f671f88f5467",
+          "split": "config.hu",
+          "kind": "language",
+          "language": "hu",
+          "version_code": 2628614
+        },
+        {
+          "file": "split_config.in.apk",
+          "bytes": 647378,
+          "sha256": "694902091435653788517f501e3f44dd3655892f3691295a62426812f6913538",
+          "split": "config.in",
+          "kind": "language",
+          "language": "in",
+          "version_code": 2628614
+        },
+        {
+          "file": "split_config.mdpi.apk",
+          "bytes": 67748,
+          "sha256": "0554b5eddb8611b9ca4bab72bf592f540cf150faaf9d1e1a70cd396f618e957e",
+          "split": "config.mdpi",
+          "kind": "dpi",
+          "dpi": 160,
+          "version_code": 2628614
+        },
+        {
+          "file": "split_config.it.apk",
+          "bytes": 676050,
+          "sha256": "69ff3ea35eb4ccd17dc094f32e9f51e71ba2ac3870d956ecbef8f8813513321d",
+          "split": "config.it",
+          "kind": "language",
+          "language": "it",
+          "version_code": 2628614
+        },
+        {
+          "file": "split_config.ja.apk",
+          "bytes": 757970,
+          "sha256": "d36839c74f55b4f88cb0eca9f0f91431f7f0154023fb1ad0c0e43a26271417f7",
+          "split": "config.ja",
+          "kind": "language",
+          "language": "ja",
+          "version_code": 2628614
+        },
+        {
+          "file": "split_config.ko.apk",
+          "bytes": 700626,
+          "sha256": "18244e6a3e139159c6c5bfe17feff6752043c748f7ec8d4b050cb3f8c30b9044",
+          "split": "config.ko",
+          "kind": "language",
+          "language": "ko",
+          "version_code": 2628614
+        },
+        {
+          "file": "split_config.ms.apk",
+          "bytes": 659666,
+          "sha256": "144dc314772154e2446dcd6b9dd37087820bed54be6ec7d4e08d6a6a50b78ffa",
+          "split": "config.ms",
+          "kind": "language",
+          "language": "ms",
+          "version_code": 2628614
+        },
+        {
+          "file": "split_config.hdpi.apk",
+          "bytes": 71844,
+          "sha256": "0ba57a8cb87f25089afd5520f189fadde2894a87cbe90d8b0f8868cbda083e1d",
+          "split": "config.hdpi",
+          "kind": "dpi",
+          "dpi": 240,
+          "version_code": 2628614
+        },
+        {
+          "file": "split_config.nl.apk",
+          "bytes": 671954,
+          "sha256": "9d5a1d02dadd9cfcd72a00fc5fd74089e67984aaae8f21059908946c07646476",
+          "split": "config.nl",
+          "kind": "language",
+          "language": "nl",
+          "version_code": 2628614
+        },
+        {
+          "file": "split_config.pl.apk",
+          "bytes": 696530,
+          "sha256": "8e5eca42ccdeb8709edfc28150173490c8d09465b1c167537b3656ed526a31d0",
+          "split": "config.pl",
+          "kind": "language",
+          "language": "pl",
+          "version_code": 2628614
+        },
+        {
+          "file": "split_config.pt.apk",
+          "bytes": 1134802,
+          "sha256": "5983c3d69d3c30969c4aef4def30419844bb3e185d6df0e29f28570e6acf0e07",
+          "split": "config.pt",
+          "kind": "language",
+          "language": "pt",
+          "version_code": 2628614
+        },
+        {
+          "file": "split_config.ru.apk",
+          "bytes": 913618,
+          "sha256": "2ffb2ca4a5f8574e92053e6906c76dd6b4b987a46d259af741e1fb934ee5aaa1",
+          "split": "config.ru",
+          "kind": "language",
+          "language": "ru",
+          "version_code": 2628614
+        },
+        {
+          "file": "split_config.sv.apk",
+          "bytes": 659666,
+          "sha256": "786af49952c0071e7adce740f5e8dabb2c9f006ef4572a46cb092da175943a36",
+          "split": "config.sv",
+          "kind": "language",
+          "language": "sv",
+          "version_code": 2628614
+        },
+        {
+          "file": "split_config.th.apk",
+          "bytes": 1024210,
+          "sha256": "d9d89416a04897b0ad3546c50178c875181368dceb07e44954ded1abc3b132fc",
+          "split": "config.th",
+          "kind": "language",
+          "language": "th",
+          "version_code": 2628614
+        },
+        {
+          "file": "split_config.tr.apk",
+          "bytes": 667858,
+          "sha256": "1b79ee571818671723d97bede9b969230b10b4292f3121ff55c1a719ef2c1aff",
+          "split": "config.tr",
+          "kind": "language",
+          "language": "tr",
+          "version_code": 2628614
+        },
+        {
+          "file": "split_config.uk.apk",
+          "bytes": 872658,
+          "sha256": "f434e20020a6ec63de98bfb2738a67adbfb50c7766c76adad7a06db09ef9f8a6",
+          "split": "config.uk",
+          "kind": "language",
+          "language": "uk",
+          "version_code": 2628614
+        },
+        {
+          "file": "split_config.vi.apk",
+          "bytes": 741586,
+          "sha256": "c13f6e372caf3c9ed6e1010d2f227e73ae72a38f47db83dd13bb596b85a23e1c",
+          "split": "config.vi",
+          "kind": "language",
+          "language": "vi",
+          "version_code": 2628614
+        },
+        {
+          "file": "split_config.zh.apk",
+          "bytes": 1450194,
+          "sha256": "f305aa9e89d8c2c4cec72534681908ed0e877873a249d950e889c8d291171e38",
+          "split": "config.zh",
+          "kind": "language",
+          "language": "zh",
+          "version_code": 2628614
+        },
+        {
+          "file": "split_config.ldpi.apk",
+          "bytes": 145301,
+          "sha256": "be44a4b7dffb92622ac5db5c77db39c4bce06e704a75fc10ef0bd6acf8a5098e",
+          "split": "config.ldpi",
+          "kind": "dpi",
+          "dpi": 120,
+          "version_code": 2628614
+        },
+        {
+          "file": "split_config.tvdpi.apk",
+          "bytes": 105672,
+          "sha256": "27406cbd0fe68fef28827b9acc46f78c7082df99bb9861d2da2a6b5227e582c4",
+          "split": "config.tvdpi",
+          "kind": "dpi",
+          "dpi": 213,
+          "version_code": 2628614
+        },
+        {
+          "file": "split_config.iw.apk",
+          "bytes": 65746,
+          "sha256": "01f8486a80d2788cbe2d28f13bf815d92d623219538d0dc90b7d6c29e6125bea",
+          "split": "config.iw",
+          "kind": "language",
+          "language": "iw",
+          "version_code": 2628614
+        },
+        {
+          "file": "split_config.xxxhdpi.apk",
+          "bytes": 92456,
+          "sha256": "f3742deba662c1e83d967e470d80b9bb90d0edb28164afd55b70fd9a7c4e927e",
+          "split": "config.xxxhdpi",
+          "kind": "dpi",
+          "dpi": 640,
+          "version_code": 2628614
+        }
+      ],
+      "supported_api_min": 35,
+      "supported_api_max": 37,
+      "validation": "Every APK signature verified with Android apksig; signer matched mirror metadata; login/network not verified"
+    },
+    {
+      "id": "claude",
+      "name": "Claude",
+      "package": "com.anthropic.claude",
+      "file": "claude-1.261020.20.xapk",
+      "source": "https://claude.en.uptodown.com/android/download/1229822033-x",
+      "provider": "uptodown",
+      "app_id": "1000217326",
+      "file_id": "1229822033",
+      "archive_sha256": "897a6aef6b4d9dda004d25a108ec3893c96e64d2583daa31a3bf502e0ac0e6db",
+      "version_name": "1.261020.20",
+      "version_code": 26102020,
+      "min_sdk": 32,
+      "bytes": 36384605,
+      "certificate_sha256": "305a1e8a432e5ec0c612b2465359c3b88e3c95d6253599ac6088562b818b64a0",
+      "parts": [
+        {
+          "file": "com.anthropic.claude.apk",
+          "bytes": 45775794,
+          "sha256": "366f98f0a746db17754b3408ea3eb241303888dc23119349d1afa041175486aa",
+          "split": "",
+          "kind": "base",
+          "version_code": 26102020
+        },
+        {
+          "file": "config.arm64_v8a.apk",
+          "bytes": 6046629,
+          "sha256": "75b5732e4ef7154c05004f9f09f94955d7c49cf93ef794839d6a2c17cd171b7e",
+          "split": "config.arm64_v8a",
+          "kind": "abi",
+          "abi": "arm64-v8a",
+          "version_code": 26102020
+        },
+        {
+          "file": "config.xxhdpi.apk",
+          "bytes": 29369,
+          "sha256": "3fa9ce2250769c37f28c7a1a072d809f633a6226f4d9656f8874930877f7de13",
+          "split": "config.xxhdpi",
+          "kind": "dpi",
+          "dpi": 480,
+          "version_code": 26102020
+        },
+        {
+          "file": "config.pt.apk",
+          "bytes": 848082,
+          "sha256": "44296a044652c9be0d230353be3002af198fd2d69606c90f9b4cceb5c04545e5",
+          "split": "config.pt",
+          "kind": "language",
+          "language": "pt",
+          "version_code": 26102020
+        },
+        {
+          "file": "config.es.apk",
+          "bytes": 803026,
+          "sha256": "cb1207e4c16a012850d7ebe7f34fe7a68928d2dd22e6f8c79a9246146fbc8fb7",
+          "split": "config.es",
+          "kind": "language",
+          "language": "es",
+          "version_code": 26102020
+        },
+        {
+          "file": "config.tr.apk",
+          "bytes": 557266,
+          "sha256": "5e7d587a42139d5e9d98b7c1a435efb301d677bc802288768036b202cd6cf1f4",
+          "split": "config.tr",
+          "kind": "language",
+          "language": "tr",
+          "version_code": 26102020
+        },
+        {
+          "file": "config.xhdpi.apk",
+          "bytes": 21175,
+          "sha256": "c2ad22ab1668abdd084b3fcdfcf53a9a0a6362d293f04ff619155de6dfe2c13c",
+          "split": "config.xhdpi",
+          "kind": "dpi",
+          "dpi": 320,
+          "version_code": 26102020
+        },
+        {
+          "file": "config.ru.apk",
+          "bytes": 696530,
+          "sha256": "97fb34dc3b3e623e5d631647f8fdf9f1719f669e664d8b1581ef7bca7555870d",
+          "split": "config.ru",
+          "kind": "language",
+          "language": "ru",
+          "version_code": 26102020
+        },
+        {
+          "file": "config.vi.apk",
+          "bytes": 590034,
+          "sha256": "adfe6e6346f7f9c0d30dda5b36289a06c755ac6e201f380dfce773428320d126",
+          "split": "config.vi",
+          "kind": "language",
+          "language": "vi",
+          "version_code": 26102020
+        },
+        {
+          "file": "config.fr.apk",
+          "bytes": 581842,
+          "sha256": "8e227328d085677245ceda296abdcfb617640e94192e338557218cdee6d8e3e2",
+          "split": "config.fr",
+          "kind": "language",
+          "language": "fr",
+          "version_code": 26102020
+        },
+        {
+          "file": "config.ko.apk",
+          "bytes": 569554,
+          "sha256": "fcb6a9c02f5a6a74e1176951ce4f8d858809a12cdca2ba6683522b26602b288c",
+          "split": "config.ko",
+          "kind": "language",
+          "language": "ko",
+          "version_code": 26102020
+        },
+        {
+          "file": "config.th.apk",
+          "bytes": 770258,
+          "sha256": "429bc0d5a3f6831aa8062b902716aee60238cd9868b08c1991b5102fe629bdf5",
+          "split": "config.th",
+          "kind": "language",
+          "language": "th",
+          "version_code": 26102020
+        },
+        {
+          "file": "config.xxxhdpi.apk",
+          "bytes": 25275,
+          "sha256": "7482ad7e02eb301924908a8671f6ea07a3f800df0388796cca5fb5b8ba6ec8d7",
+          "split": "config.xxxhdpi",
+          "kind": "dpi",
+          "dpi": 640,
+          "version_code": 26102020
+        },
+        {
+          "file": "config.ja.apk",
+          "bytes": 606418,
+          "sha256": "8fc1a05b0cc873471b250d5da10ac50d33daed64067792009be9aacb02c12bc1",
+          "split": "config.ja",
+          "kind": "language",
+          "language": "ja",
+          "version_code": 26102020
+        },
+        {
+          "file": "config.in.apk",
+          "bytes": 536786,
+          "sha256": "f8605c0ed44f1fffb1a07b04fa5bc23e1b897916dab55de41f678d035f978d63",
+          "split": "config.in",
+          "kind": "language",
+          "language": "in",
+          "version_code": 26102020
+        },
+        {
+          "file": "config.it.apk",
+          "bytes": 565458,
+          "sha256": "f0d3517fa5caabbc41d374d13643c9b1fdf168a91af4da7b11782337677e34e9",
+          "split": "config.it",
+          "kind": "language",
+          "language": "it",
+          "version_code": 26102020
+        },
+        {
+          "file": "config.armeabi_v7a.apk",
+          "bytes": 4260793,
+          "sha256": "d5d8e9cc1292c4d6eeae7025756c5d27d66d44664a831080a33f7d521c2bf3b7",
+          "split": "config.armeabi_v7a",
+          "kind": "abi",
+          "abi": "armeabi-v7a",
+          "version_code": 26102020
+        },
+        {
+          "file": "config.uk.apk",
+          "bytes": 704722,
+          "sha256": "e71103c0d1d3902506757000a1d7d6ab6339613c28a0f953d5ae3c22e37057b5",
+          "split": "config.uk",
+          "kind": "language",
+          "language": "uk",
+          "version_code": 26102020
+        },
+        {
+          "file": "config.hdpi.apk",
+          "bytes": 21173,
+          "sha256": "b6dd93bd1cfa2fa71ecbdb9e93fa131072b44cc15631b56fcd06a3c64a2f64b4",
+          "split": "config.hdpi",
+          "kind": "dpi",
+          "dpi": 240,
+          "version_code": 26102020
+        },
+        {
+          "file": "config.tvdpi.apk",
+          "bytes": 25363,
+          "sha256": "9f0260db05b3dff393d45860a6e243ffbc18fefd01888e0a45fbf46eb4711b72",
+          "split": "config.tvdpi",
+          "kind": "dpi",
+          "dpi": 213,
+          "version_code": 26102020
+        },
+        {
+          "file": "config.de.apk",
+          "bytes": 565458,
+          "sha256": "532525523c696c596e5879fc379a0ec261cddbabf3464fbfa047fcfe9f1fa705",
+          "split": "config.de",
+          "kind": "language",
+          "language": "de",
+          "version_code": 26102020
+        },
+        {
+          "file": "config.zh.apk",
+          "bytes": 807122,
+          "sha256": "0a749b003242963089400b149f7495a537c96f0b2ea5c08ebf5d80be019182c6",
+          "split": "config.zh",
+          "kind": "language",
+          "language": "zh",
+          "version_code": 26102020
+        },
+        {
+          "file": "config.mdpi.apk",
+          "bytes": 21172,
+          "sha256": "904326fe58746264cb82c156f1625410b46672a3acbfb92479bc1e0246ab5f2a",
+          "split": "config.mdpi",
+          "kind": "dpi",
+          "dpi": 160,
+          "version_code": 26102020
+        },
+        {
+          "file": "config.sv.apk",
+          "bytes": 549074,
+          "sha256": "77b2d53b38958fc206ef3ae01c54eae8da8c04454a52f14a32578649b3b94cbb",
+          "split": "config.sv",
+          "kind": "language",
+          "language": "sv",
+          "version_code": 26102020
+        },
+        {
+          "file": "config.hi.apk",
+          "bytes": 778450,
+          "sha256": "d4565053a7860906156e7feaa42852ec36abac415ac1cf09050f52387349a46b",
+          "split": "config.hi",
+          "kind": "language",
+          "language": "hi",
+          "version_code": 26102020
+        },
+        {
+          "file": "config.mr.apk",
+          "bytes": 786642,
+          "sha256": "65ff1e47f92a118bf93cf52b62dfeba0953f1c9e7831fb33b05a79af286c89ab",
+          "split": "config.mr",
+          "kind": "language",
+          "language": "mr",
+          "version_code": 26102020
+        },
+        {
+          "file": "config.nl.apk",
+          "bytes": 553170,
+          "sha256": "c96ad1eff66f8b26e3274c9ee0678d568c2b9ac19f8c16bd90aca3f2716ecfe4",
+          "split": "config.nl",
+          "kind": "language",
+          "language": "nl",
+          "version_code": 26102020
+        },
+        {
+          "file": "config.bn.apk",
+          "bytes": 786642,
+          "sha256": "fab6900cdfc360635c500b98031e858249f40c63cfef34f5191b6768b414ea1a",
+          "split": "config.bn",
+          "kind": "language",
+          "language": "bn",
+          "version_code": 26102020
+        },
+        {
+          "file": "config.x86_64.apk",
+          "bytes": 6292359,
+          "sha256": "c2891bfdcba317ad8ebd7c01e0d6ae00433b0be8c81ecabadf3b1a0ef3e397af",
+          "split": "config.x86_64",
+          "kind": "abi",
+          "abi": "x86_64",
+          "version_code": 26102020
+        },
+        {
+          "file": "config.da.apk",
+          "bytes": 540882,
+          "sha256": "73cb3b12621a9af5337f28f7d1ffd8ff0da4af6b9f7906cb50d50881c45ca9b5",
+          "split": "config.da",
+          "kind": "language",
+          "language": "da",
+          "version_code": 26102020
+        }
+      ],
+      "supported_api_min": 35,
+      "supported_api_max": 37,
+      "validation": "Every APK signature verified with Android apksig; signer matched mirror metadata; login/network not verified"
+    }
+  ]
+}

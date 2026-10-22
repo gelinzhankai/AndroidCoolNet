@@ -8,7 +8,7 @@ import tempfile
 import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
-VERSION = sys.argv[1] if len(sys.argv) > 1 else 'v0.5.1'
+VERSION = sys.argv[1] if len(sys.argv) > 1 else 'v0.6.0'
 DIST = ROOT / 'dist' / VERSION
 
 
@@ -25,14 +25,19 @@ with tempfile.TemporaryDirectory(prefix='AndroidCoolNet-release-') as temp:
     dest = Path(temp)
     with zipfile.ZipFile(DIST/f'AndroidCoolNet-Windows-{VERSION}.zip') as archive:
         names = archive.namelist()
-        assert not any('cache/gms/' in n or 'x86_64-release.apk' in n or '/tests/' in n or '/reports/' in n for n in names)
-        assert sum(n.endswith('.apk') for n in names) == (2 if VERSION in ('v0.5.0', 'v0.5.1') else 1)
+        assert not any('cache/gms/' in n or 'cache/ai/' in n or 'x86_64-release.apk' in n or '/tests/' in n or '/reports/' in n for n in names)
+        assert sum(n.endswith('.apk') for n in names) == (2 if VERSION in ('v0.5.0', 'v0.5.1', 'v0.6.0') else 1)
         archive.extractall(dest)
     app = dest/'AndroidCoolNet'
-    if VERSION in ('v0.5.0', 'v0.5.1'):
+    if VERSION in ('v0.5.0', 'v0.5.1', 'v0.6.0'):
         helper_meta = json.loads((app/'config/clipboard-helper.json').read_text())
         assert sha(app/'cache/androidcoolnet-clipboard.apk') == helper_meta['sha256']
         assert (app/'config/override.yaml').is_file()
+    if VERSION == 'v0.6.0':
+        assert (app/'ai_apps.py').is_file()
+        ai_catalog = json.loads((app/'config/ai-apps.json').read_text())['apps']
+        assert {e['package'] for e in ai_catalog} == {'com.openai.chatgpt', 'com.anthropic.claude'}
+        assert all(len(e['certificate_sha256']) == 64 and len(e['archive_sha256']) == 64 for e in ai_catalog)
     if VERSION == 'v0.4.1':
         assert (app/'PRIVACY_NOTICE.md').is_file()
     manifest = json.loads((app/'SHA256.json').read_text())
@@ -79,7 +84,7 @@ print('PASS: bundled runtime imports each GSF from the offline ZIP')
     if VERSION == 'v0.4.1':
         assert report['privacy_check']['status'] == 'not_installed'
     assert all(x['status']=='already_installed' for x in report['google_install']['components'].values())
-    if VERSION == 'v0.5.1':
+    if VERSION in ('v0.5.1', 'v0.6.0'):
         assert report['play_store']['status'] == 'launcher_available'
         assert report['play_store']['system_app']
         assert report['play_store']['launch_status'] == 'not_requested'

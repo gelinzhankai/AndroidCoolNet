@@ -114,3 +114,15 @@
 - `tests/verify_play_store_emulator.py` 在固定 API 35 模拟器以 shell UID 2000 实测：系统 Play 商店可解析入口，`--detect-only` 保持应用状态，`--open-play-store` 启动后商店 Activity 位于前台；Google 版本和启用状态、安装包集合不变，最后返回桌面。
 - 测试保持飞行模式、Wi-Fi 关闭、HTTP 代理为空、默认网络 none。首次测试脚本仅接受 `topResumedActivity:`，实际输出使用 `=`，修正兼容匹配后验收通过。未操作真实手机，也未验证账号登录、联网、厂商桌面隐藏图标或 Android 16/17。
 - 此版本仅更新 Windows 基础包；Google 组件下载和手动下载页面继续使用 v0.5.0，已有离线包可复用。安装器只报告启动请求是否被系统接受，不将其当作账号/联网可用证明。
+
+# v0.6.0 可选 ChatGPT / Claude 安装验收（2026-10-22）
+
+- 99 项单元测试通过。新增覆盖已有应用及安装前状态变化不覆盖、错误安装器/修改包拒绝、分包与架构匹配、下载失败转手动、留空跳过、系统安装失败继续，以及 AI 阶段失败不阻断后续白名单/覆写、重新检测新装应用。
+- 固定来源：[APKMirror ChatGPT 1.2026.286](https://www.apkmirror.com/apk/openai/chatgpt/chatgpt-1-2026-286-release/chatgpt-1-2026-286-android-apk-download/)（APKM，95,559,093 字节）和 [Uptodown Claude 1.261020.20 原始 XAPK](https://claude.en.uptodown.com/android/download/1229822033-x)（36,384,605 字节）。维护时用 Android apksig 验证全部 67 个 APK 的签名，核对包名、版本及下载页证书指纹；Claude 整包 SHA-256 也与页面一致。证书锚来自镜像元数据，不是厂商独立提供的证明。运行时只接受清单中固定整包和分包的 SHA-256，不接受未知版本或商店安装器。清单见 `config/ai-apps.json`，更新工具见 `tests/build_ai_catalog.py` 和 `tests/VerifyAppSet.java`，JDK/SDK 不随用户包分发。
+- 电脑经本地代理实测 ChatGPT 自动下载至 100% 并通过 SHA-256；Claude 无交互下载请求返回 HTTP 400，需要用户在浏览器完成验证后下载原始 XAPK。程序会转手动导入，不采集浏览器验证令牌或安装商店客户端。动态下载链接不保存在仓库中。
+- `tests/verify_ai_emulator.py` 在断网的 Android 15 / API 35 / x86_64 官方模拟器、shell UID 2000 下实测：ChatGPT 28 个分包、Claude 23 个分包分别一次 `install-multiple -R` 成功；重复运行保留版本和状态，两个应用都进入含网络权限的白名单候选。首次验收脚本读取了第二次运行前的旧报告，修正为读取最新报告后重跑通过；应用安装过程本身成功。
+- 测试结束仅移除本次安装的两个应用，原安装包集合、禁用列表和 Google 组件版本/状态均恢复或保持。飞行模式开、Wi-Fi 关、HTTP 代理空、默认网络 none；未修改真实手机、原 Clash 配置或执行应用登录。证据在本地 `tests/artifacts/ai-apps.json`。
+- Android 15/16/17 正式版按声明的最低 SDK 与 ABI 匹配；本轮只实测 API 35 x86_64 安装。未验证 ARM 实机、Android 16/17、账号登录、Play Integrity、地区限制或外网可达性。完整 Clash UI 的本轮新增应用衔接由集成测试覆盖，已有 UI 验收见 v0.5.0。
+- 基础包继续约 63 MiB，不含 AI 应用包、Google 离线组件或模拟器；Google 离线包继续复用 v0.5.0。发布包检查使用自身的 Python/ADB，并核对文件哈希、缺失组件导入及已装 Google 不覆盖。
+
+复现：先准备清单中两个已核验文件到 `cache/ai/`，按共享说明启动并隔离固定模拟器，再运行 `tests/verify_ai_emulator.py`；检测到两个应用中任何一个已存在时会拒绝测试，避免覆盖。普通用户使用 `install.cmd` 或 `install.cmd --apps-only`，不运行维护/测试脚本。

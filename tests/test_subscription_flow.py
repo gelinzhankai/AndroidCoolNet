@@ -15,7 +15,7 @@ VALID = b'proxies: [{name: local, type: http, server: 127.0.0.1, port: 19090}]'
 
 
 class SubscriptionFlowTests(unittest.TestCase):
-    def run_main(self, entered, payload=VALID, download_error=None, local_bad=False, antifraud_failure=None, ui_failure=False):
+    def run_main(self, entered, payload=VALID, download_error=None, local_bad=False, antifraud_failure=None, ui_failure=False, ai_failure=False, new_app=False):
         with tempfile.TemporaryDirectory() as tmp, contextlib.ExitStack() as stack:
             stack.enter_context(mock.patch.object(s, "ROOT", Path(tmp)))
             prompt = stack.enter_context(mock.patch("builtins.input", return_value=entered))
@@ -40,6 +40,11 @@ class SubscriptionFlowTests(unittest.TestCase):
             stack.enter_context(mock.patch.object(s, "inspect_device", return_value=(
                 {"model":"test", "android":"15", "api":35, "abis":["arm64-v8a"], "gms":{}}, installed)))
             google = stack.enter_context(mock.patch.object(s, "provision_google", return_value={"complete": True}))
+            def provision_ai(*args):
+                if new_app:
+                    installed.add("com.openai.chatgpt")
+                return {"complete": not ai_failure, "selected": [], "apps": {}}
+            stack.enter_context(mock.patch.object(s, "provision_ai_apps", side_effect=provision_ai))
             stack.enter_context(mock.patch.object(s, "inspect_play_store", return_value={"status": "missing"}))
             install = stack.enter_context(mock.patch.object(s, "install_client", return_value="installed"))
             bridge = stack.enter_context(mock.patch.object(s, "ClipboardBridge")).return_value
@@ -70,10 +75,12 @@ class SubscriptionFlowTests(unittest.TestCase):
                 self.assertEqual(report["status"], "incomplete")
                 self.assertNotIn("覆写已保存", output.getvalue())
                 return report, prompt, fetch
-            self.assertEqual(s.main(args), 0)
+            self.assertEqual(s.main(args), 2 if ai_failure else 0)
             google.assert_called_once()
             install.assert_called_once()
             ui.configure_whitelist.assert_called_once()
+            if new_app:
+                self.assertIn("com.openai.chatgpt", adb.network_candidates.call_args.args[0])
             ui.configure_override.assert_called_once_with(["8.8.8.8"])
             bridge.cleanup.assert_called_once()
             report = next(r for p in (Path(tmp)/"reports").glob("*.json")
@@ -89,6 +96,15 @@ class SubscriptionFlowTests(unittest.TestCase):
             self.assertNotIn("private-subscription-token", json.dumps(report))
             self.assertNotIn("private-subscription-token", output.getvalue())
             return report, prompt, fetch
+
+    def test_ai_failure_still_configures_whitelist_override_and_subscription(self):
+        report, _, _ = self.run_main("https://example.test/subscription", ai_failure=True)
+        self.assertFalse(report["ai_apps"]["complete"])
+        self.assertEqual(report["profile_status"], "imported")
+
+    def test_new_app_is_included_after_ai_stage_with_blank_subscription(self):
+        report, _, _ = self.run_main("", new_app=True)
+        self.assertIn("com.openai.chatgpt", report["google_and_template_candidates"])
 
     def test_uninstall_refusal_continues_google_subscription_and_whitelist(self):
         report, _, _ = self.run_main('https://example.test/subscription', antifraud_failure='Failure [DELETE_FAILED_DEVICE_POLICY_MANAGER]')
