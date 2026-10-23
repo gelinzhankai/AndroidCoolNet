@@ -24,6 +24,8 @@ class AiAppsTests(unittest.TestCase):
             z.writestr("base.apk", b"original-fixture")
         self.entry = dict(id="claude", name="Claude", package="com.anthropic.claude", file="claude.xapk",
                           provider="uptodown", source="https://claude.en.uptodown.com/android/download/1229822033-x",
+                          download_url="https://github.com/gelinzhankai/AndroidCoolNet/releases/download/v0.6.1/claude.xapk",
+                          release_page="https://github.com/gelinzhankai/AndroidCoolNet/releases/tag/v0.6.1",
                           version_name="fixture", version_code=1, bytes=self.bundle.stat().st_size,
                           archive_sha256=a.sha(self.bundle), supported_api_min=35, supported_api_max=37,
                           min_sdk=32, parts=[dict(file="base.apk", kind="base", bytes=16,
@@ -94,7 +96,7 @@ class AiAppsTests(unittest.TestCase):
              mock.patch("builtins.input", side_effect=["1", "", str(self.bundle)]):
             result = a.acquire(self.entry, self.root)
         self.assertTrue(a.cached(result, self.entry))
-        opened.assert_called_once_with(self.entry["source"])
+        opened.assert_called_once_with(self.entry["release_page"])
 
     def test_manual_wrong_file_can_retry(self):
         wrong = self.root / "installer.apk"
@@ -142,22 +144,61 @@ class AiAppsTests(unittest.TestCase):
             a.extract_verified(self.bundle, self.entry, self.entry["parts"], self.root)
 
     def test_https_source_allowlist_cannot_redirect_to_arbitrary_host(self):
-        for url in ("http://www.apkmirror.com/", "https://apkmirror.com.evil.test/", "https://127.0.0.1/", "https://user:pass@dw.uptodown.com/", "https://dw.uptodown.com:8080/"):
+        for url in ("http://github.com/", "https://github.com.evil.test/", "https://127.0.0.1/", "https://user:pass@release-assets.githubusercontent.com/", "https://release-assets.githubusercontent.com:8080/", "https://github.com/other/repo/releases/download/v1/app.apk", "https://dw.uptodown.com/file"):
             with self.assertRaises(a.AppError):
                 a.validate_url(url)
 
-    def test_uptodown_requires_original_file_response(self):
-        entry = {**self.entry, "app_id": "1000217326", "file_id": "1229822033"}
+    def test_only_versioned_own_repo_asset_is_downloaded(self):
+        self.assertEqual(a.resolve_download(self.entry), self.entry["download_url"])
+        for url in (self.entry["download_url"].replace("v0.6.1", "latest"),
+                    self.entry["download_url"].replace("claude.xapk", "installer.apk"),
+                    self.entry["source"], self.entry["download_url"] + "?token=secret"):
+            with self.assertRaises(a.AppError):
+                a.resolve_download({**self.entry, "download_url": url})
+
+    def test_direct_download_verifies_content_and_displays_progress(self):
         response = mock.MagicMock()
         response.__enter__.return_value = response
-        response.geturl.return_value = entry["source"]
-        response.read.return_value = b'{"success":1,"data":{"downloadURL":"https://dw.uptodown.com/original"}}'
-        opener = mock.Mock()
-        opener.open.return_value = response
-        self.assertEqual(a.resolve_download(entry, opener), "https://dw.uptodown.com/original")
-        response.read.return_value = b'{"success":0}'
-        with self.assertRaises(a.AppError):
-            a.resolve_download(entry, opener)
+        response.geturl.return_value = "https://release-assets.githubusercontent.com/original"
+        response.headers = {"Content-Length": str(self.entry["bytes"])}
+        response.read.side_effect = io.BytesIO(self.bundle.read_bytes()).read
+        with mock.patch.object(a.urllib.request, "build_opener") as build, contextlib.redirect_stdout(self.output):
+            build.return_value.open.return_value = response
+            destination = self.root / "download.xapk"
+            a.download_bundle(self.entry, destination)
+        self.assertTrue(a.cached(destination, self.entry))
+        build.return_value.open.assert_called_once()
+        self.assertEqual(build.return_value.open.call_args.args[0].full_url, self.entry["download_url"])
+        self.assertIn("100.0%", self.output.getvalue())
+
+    def test_download_rejects_wrong_length_and_hash(self):
+        for body in (b"store installer", b"x" * self.entry["bytes"]):
+            response = mock.MagicMock()
+            response.__enter__.return_value = response
+            response.geturl.return_value = self.entry["download_url"]
+            response.headers = {"Content-Length": str(len(body))}
+            response.read.side_effect = io.BytesIO(body).read
+            with mock.patch.object(a.urllib.request, "build_opener") as build, contextlib.redirect_stdout(self.output):
+                build.return_value.open.return_value = response
+                with self.assertRaises(a.AppError):
+                    a.download_bundle(self.entry, self.root / "wrong.xapk")
+
+    def test_redirect_to_mirror_or_untrusted_host_is_rejected(self):
+        for url in (self.entry["source"], "https://evil.test/installer.apk"):
+            with self.assertRaises(a.AppError):
+                a.CheckedRedirect().redirect_request(mock.Mock(), None, 302, "Found", {}, url)
+
+    def test_selected_app_downloads_once_and_verified_cache_is_reused(self):
+        def download(entry, destination, proxy):
+            destination.write_bytes(self.bundle.read_bytes())
+        with mock.patch.object(a, "download_bundle", side_effect=download) as fetch, \
+             mock.patch("builtins.input", return_value="1") as prompt:
+            first = a.acquire(self.entry, self.root)
+            second = a.acquire(self.entry, self.root)
+        self.assertEqual(first, second)
+        fetch.assert_called_once()
+        self.assertEqual(fetch.call_args.args[0]["id"], "claude")
+        prompt.assert_called_once()
 
 
 if __name__ == "__main__":

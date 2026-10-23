@@ -7,7 +7,7 @@ import shutil
 import zipfile
 
 ROOT = Path(__file__).resolve().parent
-VERSION = "v0.6.0"
+VERSION = "v0.6.1"
 DIST = ROOT / "dist" / VERSION
 STAMP = (2026, 10, 19, 0, 0, 0)
 
@@ -78,6 +78,16 @@ def main():
         ),
     })
     assets.append(output)
+
+    # Publish unchanged app archives separately; never add them to the base ZIP.
+    ai_catalog = json.loads((ROOT / "config/ai-apps.json").read_text(encoding="utf-8"))["apps"]
+    for entry in ai_catalog:
+        source = (ROOT / "cache/ai" / entry["file"]).resolve()
+        assert source.parent == (ROOT / "cache/ai").resolve()
+        assert source.stat().st_size == entry["bytes"] and sha(source) == entry["archive_sha256"], source.name
+        output = DIST / source.name
+        shutil.copyfile(source, output)
+        assets.append(output)
 
     names = ["install.cmd", "Prepare.ps1", "setup_tool.py", "gms_assets.py", "ai_apps.py", "README.md", "TESTING.md", "PRIVACY_NOTICE.md"]
     paths = [ROOT / name for name in names]

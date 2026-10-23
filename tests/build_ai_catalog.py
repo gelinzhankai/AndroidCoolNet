@@ -10,6 +10,8 @@ import zipfile
 ROOT = Path(__file__).resolve().parents[1]
 BT = Path(r"C:\Android\Sdk\build-tools\35.0.0")
 JAVA = Path(r"C:\Program Files\Microsoft\jdk-21.0.9.10-hotspot\bin\java.exe")
+RELEASE = "https://github.com/gelinzhankai/AndroidCoolNet/releases"
+ASSET_TAG = "v0.6.1"
 SAMPLES = [
     dict(id="chatgpt", name="ChatGPT", package="com.openai.chatgpt", file="chatgpt-1.2026.286.apkm",
          source="https://www.apkmirror.com/apk/openai/chatgpt/chatgpt-1-2026-286-release/chatgpt-1-2026-286-android-apk-download/",
@@ -80,6 +82,7 @@ for spec in SAMPLES:
         assert len(bases) == 1 and all(p["version_code"] == spec["version_code"] for p in parts)
         entry = {k: v for k, v in spec.items() if not k.startswith("anchor")}
         entry.update(bytes=path.stat().st_size, certificate_sha256=next(iter(certs)), parts=parts,
+                     download_url=f"{RELEASE}/download/{ASSET_TAG}/{path.name}", release_page=f"{RELEASE}/tag/{ASSET_TAG}",
                      supported_api_min=35, supported_api_max=37,
                      validation="Every APK signature verified with Android apksig; signer matched mirror metadata; login/network not verified")
         entries.append(entry)

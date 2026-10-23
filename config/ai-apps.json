@@ -350,7 +350,9 @@
       ],
       "supported_api_min": 35,
       "supported_api_max": 37,
-      "validation": "Every APK signature verified with Android apksig; signer matched mirror metadata; login/network not verified"
+      "validation": "Every APK signature verified with Android apksig; signer matched mirror metadata; login/network not verified",
+      "download_url": "https://github.com/gelinzhankai/AndroidCoolNet/releases/download/v0.6.1/chatgpt-1.2026.286.apkm",
+      "release_page": "https://github.com/gelinzhankai/AndroidCoolNet/releases/tag/v0.6.1"
     },
     {
       "id": "claude",
@@ -640,7 +642,9 @@
       ],
       "supported_api_min": 35,
       "supported_api_max": 37,
-      "validation": "Every APK signature verified with Android apksig; signer matched mirror metadata; login/network not verified"
+      "validation": "Every APK signature verified with Android apksig; signer matched mirror metadata; login/network not verified",
+      "download_url": "https://github.com/gelinzhankai/AndroidCoolNet/releases/download/v0.6.1/claude-1.261020.20.xapk",
+      "release_page": "https://github.com/gelinzhankai/AndroidCoolNet/releases/tag/v0.6.1"
     }
   ]
 }

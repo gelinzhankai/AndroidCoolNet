@@ -1,6 +1,5 @@
 """Optional original app bundles: reviewed SHA-256 pins, no store installer or APK replacement."""
 import hashlib
-from html.parser import HTMLParser
 import json
 from pathlib import Path
 import re
@@ -39,8 +38,8 @@ def sha(path):
 def validate_url(url):
     parsed = urllib.parse.urlsplit(url)
     host = parsed.hostname or ""
-    allowed = host in {"www.apkmirror.com", "claude.en.uptodown.com", "dw.uptodown.com"}
-    allowed |= host.endswith(".r2.cloudflarestorage.com") or host.endswith(".utdstc.com")
+    allowed = host in {"release-assets.githubusercontent.com", "objects.githubusercontent.com", "github-releases.githubusercontent.com"}
+    allowed |= host == "github.com" and parsed.path.startswith("/gelinzhankai/AndroidCoolNet/releases/")
     if parsed.scheme != "https" or parsed.username or parsed.password or parsed.port not in (None, 443) or not allowed:
         raise AppError("下载跳转不属于已支持的 HTTPS 来源。")
     return url
@@ -52,59 +51,21 @@ class CheckedRedirect(urllib.request.HTTPRedirectHandler):
         return super().redirect_request(req, fp, code, msg, headers, newurl)
 
 
-class Links(HTMLParser):
-    def __init__(self):
-        super().__init__()
-        self.links = []
-
-    def handle_starttag(self, tag, attrs):
-        if tag == "a":
-            self.links.append(dict(attrs))
-
-
-def resolve_download(entry, opener):
-    """Use normal public download steps; challenge responses fall back to the user's browser."""
-    source = validate_url(entry["source"])
-
-    def read(url, data=None):
-        req = urllib.request.Request(validate_url(url), data=data, headers={
-            "User-Agent": "AndroidCoolNet/0.6.0", "Content-Type": "application/json", "Referer": source})
-        with opener.open(req, timeout=25) as response:
-            validate_url(response.geturl())
-            raw = response.read(2 * 1024 * 1024 + 1)
-        if len(raw) > 2 * 1024 * 1024:
-            raise AppError("下载页面过大。")
-        return raw.decode("utf-8")
-
-    if entry["provider"] == "apkmirror":
-        parser = Links()
-        parser.feed(read(source))
-        links = [a["href"] for a in parser.links if "/download/?key=" in a.get("href", "")]
-        if len(set(links)) != 1:
-            raise AppError("下载入口需要浏览器验证或页面已变化。")
-        page = urllib.parse.urljoin(source, links[0])
-        parser = Links()
-        parser.feed(read(page))
-        links = [a["href"] for a in parser.links if a.get("id") == "download-link" and a.get("href")]
-        if len(links) != 1:
-            raise AppError("未取得原始分包下载入口。")
-        return validate_url(urllib.parse.urljoin(page, links[0]))
-    if entry["provider"] == "uptodown":
-        endpoint = f"https://claude.en.uptodown.com/ajax/app/{entry['app_id']}/file/{entry['file_id']}/download-url"
-        # Never collect browser cookies or solve a challenge. The server may require
-        # interactive verification, in which case this request is allowed to fail.
-        result = json.loads(read(endpoint, b'{"onlyXapk":true}'))
-        if result.get("success") != 1:
-            raise AppError("网站要求浏览器验证，请手动下载原始 XAPK。")
-        return validate_url(result["data"]["downloadURL"])
-    raise AppError("不支持此下载来源。")
+def resolve_download(entry):
+    """Use a versioned Release asset; mirror URLs remain provenance only."""
+    url = validate_url(entry["download_url"])
+    parsed = urllib.parse.urlsplit(url)
+    expected = r"/gelinzhankai/AndroidCoolNet/releases/download/v\d+\.\d+\.\d+/" + re.escape(entry["file"])
+    if parsed.hostname != "github.com" or parsed.query or parsed.fragment or not re.fullmatch(expected, parsed.path):
+        raise AppError("应用下载地址不是本仓库的固定版本 Release 附件。")
+    return url
 
 
 def download_bundle(entry, destination, proxy=None):
     opener = urllib.request.build_opener(CheckedRedirect(), urllib.request.ProxyHandler(
         {"https": proxy, "http": proxy} if proxy else {}))
-    url = resolve_download(entry, opener)
-    request = urllib.request.Request(url, headers={"User-Agent": "AndroidCoolNet/0.6.0", "Referer": entry["source"]})
+    url = resolve_download(entry)
+    request = urllib.request.Request(url, headers={"User-Agent": "AndroidCoolNet/0.6.1"})
     count, digest, last = 0, hashlib.sha256(), 0
     with opener.open(request, timeout=40) as response, destination.open("wb") as stream:
         validate_url(response.geturl())
@@ -156,14 +117,14 @@ def acquire(entry, root, supplied=(), proxy=None):
                 temporary.replace(destination)
             return destination
         except (AppError, OSError, ValueError, KeyError, TypeError):
-            say("自动下载未完成（网站验证、网络或文件不匹配）；改为浏览器下载原始文件，不影响后续流程。")
-    say("原始文件页面：" + entry["source"])
-    if entry["provider"] == "uptodown":
-        say("选择显示文件大小的原始 XAPK 下载；不要选择 WITH UPTODOWN APP STORE。")
+            say("GitHub 自动下载未完成（网络或文件不匹配）；改为手动下载，不影响后续流程。")
+    page = validate_url(entry["release_page"])
+    say("GitHub 下载页面：" + page)
+    say("在 Assets 中下载 " + entry["file"] + "，无需解压。")
     if ask("按回车打开下载页面；输入 0 跳过此应用：") == "0":
         return None
     try:
-        webbrowser.open(entry["source"])
+        webbrowser.open(page)
     except webbrowser.Error:
         say("浏览器未打开，请自行访问上面的地址。")
     for _ in range(3):
